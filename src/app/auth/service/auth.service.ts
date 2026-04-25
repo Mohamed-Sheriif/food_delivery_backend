@@ -3,18 +3,27 @@ import {
   findUserByEmail,
   findUserExistsByEmailOrPhone,
   createUser,
+  updateUserPassword,
 } from "../../user/repository/users.repo";
-import { LoginDTO, RegisterDTO } from "../dto/auth.dto";
+import { LoginDTO, RegisterDTO, ResetPasswordDTO } from "../dto/auth.dto";
 import {
   UserAlreadyExistsError,
   CannotSignupAsSystemAdmin,
   IncorrectCredentialsError,
+  InvalidOTPError,
 } from "../errors";
+import {
+  createPasswordReset,
+  findLatestPasswordResetByUserId,
+  updatePasswordResetConsumedAt,
+} from "../repository/password-reset-repo";
 import {
   hashPassword,
   createAccessToken,
   createRefreshToken,
   comparePassword,
+  generateOTP,
+  hashOTP,
 } from "../utils";
 
 export class AuthService {
@@ -103,6 +112,64 @@ export class AuthService {
         createdAt: user.createdAt,
       },
     };
+  };
+
+  forgetPassword = async (email: string) => {
+    // 1. find user by email
+    const user = await findUserByEmail(email);
+
+    // 2. if not found return silently, we don't want to reveal that the email is not registered in our system
+    if (!user) {
+      return;
+    }
+
+    // 3. generate otp
+    const otp = generateOTP();
+
+    // 4. hash otp
+    const hashedOtp = hashOTP(otp);
+
+    // 5. insert otp
+    await createPasswordReset({
+      userId: user.id,
+      otpHash: hashedOtp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // expires in 10 minutes
+      createdAt: new Date(),
+    });
+
+    // 6.  TODO:send otp to user email
+    console.log(`mocked email sent: ${otp}`);
+  };
+
+  resetPassword = async (data: ResetPasswordDTO) => {
+    // 1. find user by email
+    const user = await findUserByEmail(data.email);
+
+    // 2. if not found throw error
+    if (!user) {
+      throw InvalidOTPError;
+    }
+
+    // 3. find otp by user id
+    const passwordReset = await findLatestPasswordResetByUserId(user.id);
+
+    // 4. if otp not valid throw error
+    if (!passwordReset) {
+      throw InvalidOTPError;
+    }
+
+    // 5. verify otp
+    const otpHash = hashOTP(data.otp);
+    if (otpHash !== passwordReset.otpHash || passwordReset.isExpired()) {
+      throw InvalidOTPError;
+    }
+
+    // 6. hash new password and update
+    const newHashedPassword = await hashPassword(data.newPassword);
+    await updateUserPassword(user.id, newHashedPassword);
+
+    // 7. update reset password consumedAt
+    await updatePasswordResetConsumedAt(passwordReset.id);
   };
 }
 

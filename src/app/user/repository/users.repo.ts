@@ -52,6 +52,17 @@ export async function findUserExistsByEmailOrPhone(
   return result.rows[0].exists;
 }
 
+export async function findUserExistsByEmail(email: string): Promise<Boolean> {
+  const result = await db.raw(
+    `
+      SELECT EXISTS (SELECT 1 FROM users WHERE email = ?) AS "exists"
+    `,
+    [email],
+  );
+
+  return result.rows[0].exists;
+}
+
 export async function createUser(user: Partial<User>): Promise<User> {
   const [row] = await db("users")
     .insert({
@@ -66,4 +77,13 @@ export async function createUser(user: Partial<User>): Promise<User> {
     .returning(USER_COLUMNS);
 
   return toEntity(row);
+}
+
+export async function updateUserPassword(
+  userId: number,
+  newPassword: string,
+): Promise<void> {
+  await db("users")
+    .where({ id: userId })
+    .update({ password_hash: newPassword });
 }

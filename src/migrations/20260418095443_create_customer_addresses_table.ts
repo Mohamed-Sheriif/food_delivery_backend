@@ -1,8 +1,7 @@
 import type { Knex } from "knex";
 
-
 export async function up(knex: Knex): Promise<void> {
-    await knex.raw(`
+  await knex.raw(`
         CREATE TABLE customer_addresses(
             id SERIAL PRIMARY KEY,
             user_id BIGINT NOT NULL ,
@@ -20,11 +19,9 @@ export async function up(knex: Knex): Promise<void> {
             CONSTRAINT fk_customer_addresses_user_id FOREIGN KEY (user_id) REFERENCES users(id)
         );
         CREATE INDEX idx_customer_addresses_user_id ON customer_addresses(user_id);
-    `)
+    `);
 }
-
 
 export async function down(knex: Knex): Promise<void> {
-    await knex.raw(`DROP TABLE customer_addresses;`)
+  await knex.raw(`DROP TABLE customer_addresses;`);
 }
-

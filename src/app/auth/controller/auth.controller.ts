@@ -1,6 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { validateBody } from "../../../common/validation/validate";
-import { LoginDTO, RegisterDTO } from "../dto/auth.dto";
+import {
+  ForgetPasswordDTO,
+  LoginDTO,
+  RegisterDTO,
+  ResetPasswordDTO,
+} from "../dto/auth.dto";
 import { AuthService, authService } from "../service/auth.service";
 
 export class AuthController {
@@ -33,6 +38,38 @@ export class AuthController {
       res.status(200).json(result);
     } catch (err) {
       next(err);
+    }
+  };
+
+  forgetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. validate req.body
+      const data = await validateBody(ForgetPasswordDTO, req.body);
+
+      // 2. call service
+      await this.authService.forgetPassword(data.email);
+
+      // 3. respond
+      res.status(200).json({ message: "Email sent." });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. validate req.body
+      const data = await validateBody(ResetPasswordDTO, req.body);
+
+      // 2. call service
+      await this.authService.resetPassword(data);
+
+      // 3. respond
+      res
+        .status(200)
+        .json({ message: "Password reset successful, Please login agin." });
+    } catch (error) {
+      next(error);
     }
   };
 }
