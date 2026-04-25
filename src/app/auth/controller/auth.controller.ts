@@ -96,6 +96,24 @@ export class AuthController {
       next(error);
     }
   };
+
+  refreshToken = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. get refresh token from cookies
+      const refreshToken = req.cookies.refresh_token;
+
+      // 2. call service
+      const result = await this.authService.refreshToken(refreshToken);
+
+      // 3. set cookies
+      this.setAuthCookies(res, result);
+
+      // 4. respond
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const authController = new AuthController(authService);

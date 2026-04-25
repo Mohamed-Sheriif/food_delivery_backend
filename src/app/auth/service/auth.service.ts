@@ -4,6 +4,7 @@ import {
   findUserExistsByEmailOrPhone,
   createUser,
   updateUserPassword,
+  findUserById,
 } from "../../user/repository/users.repo";
 import { LoginDTO, RegisterDTO, ResetPasswordDTO } from "../dto/auth.dto";
 import {
@@ -11,6 +12,7 @@ import {
   CannotSignupAsSystemAdmin,
   IncorrectCredentialsError,
   InvalidOTPError,
+  InvalidTokenError,
 } from "../errors";
 import {
   createPasswordReset,
@@ -24,6 +26,7 @@ import {
   comparePassword,
   generateOTP,
   hashOTP,
+  verifyRefreshToken,
 } from "../utils";
 
 export class AuthService {
@@ -170,6 +173,43 @@ export class AuthService {
 
     // 7. update reset password consumedAt
     await updatePasswordResetConsumedAt(passwordReset.id);
+  };
+
+  refreshToken = async (refreshToken: string) => {
+    // 1. verify refresh token
+    const payload = verifyRefreshToken(refreshToken);
+
+    // 2. find user by user id
+    const user = await findUserById(payload.userId);
+
+    // 3. if not found throw error
+    if (!user) {
+      throw InvalidTokenError;
+    }
+
+    // 4. build the new payload
+    const newPayload = {
+      userId: user.id,
+      role: user.systemRole,
+      email: user.email,
+    };
+
+    // 5. create new access token and refresh token
+    const newAccessToken = createAccessToken(newPayload);
+    const newRefreshToken = createRefreshToken(newPayload);
+
+    // 5. return new access token and refresh token
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        systemRole: user.systemRole,
+        createdAt: user.createdAt,
+      },
+    };
   };
 }
 
