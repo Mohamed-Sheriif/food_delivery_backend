@@ -26,6 +26,23 @@ function toEntity(row: any) {
     deletedAt: row.deleted_at,
   });
 }
+
+export async function createUser(user: Partial<User>): Promise<User> {
+  const [row] = await db("users")
+    .insert({
+      email: user.email,
+      phone: user.phone,
+      name: user.name,
+      password_hash: user.passwordHash,
+      system_role: user.systemRole,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    })
+    .returning(USER_COLUMNS);
+
+  return toEntity(row);
+}
+
 export async function findUserByEmail(
   email: string,
 ): Promise<User | undefined> {
@@ -63,20 +80,14 @@ export async function findUserExistsByEmail(email: string): Promise<Boolean> {
   return result.rows[0].exists;
 }
 
-export async function createUser(user: Partial<User>): Promise<User> {
-  const [row] = await db("users")
-    .insert({
-      email: user.email,
-      phone: user.phone,
-      name: user.name,
-      password_hash: user.passwordHash,
-      system_role: user.systemRole,
-      created_at: user.createdAt,
-      updated_at: user.updatedAt,
-    })
-    .returning(USER_COLUMNS);
+export async function findUserById(id: number): Promise<User | undefined> {
+  const row = await db("users")
+    .select(USER_COLUMNS)
+    .where("id", id)
+    .whereNull("deleted_at")
+    .first();
 
-  return toEntity(row);
+  return row ? toEntity(row) : undefined;
 }
 
 export async function updateUserPassword(
