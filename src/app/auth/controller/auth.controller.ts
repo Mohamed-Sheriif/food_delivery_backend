@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
+import { daysToMilliseconds, hoursToMilliseconds } from "../../../common/time/time";
 import { validateBody } from "../../../common/validation/validate";
 import {
   ForgetPasswordDTO,
@@ -19,12 +20,12 @@ export class AuthController {
     res.cookie("access_token", tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 1000, // 1 hour
+      maxAge: hoursToMilliseconds(1),
     });
     res.cookie("refresh_token", tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days,
+      maxAge: daysToMilliseconds(7),
       path: "/api/auth/refresh-token", // restrict refresh token to this path
     });
   }

@@ -7,6 +7,7 @@ import {
   findUserById,
 } from "../../user/repository/users.repo";
 import { LoginDTO, RegisterDTO, ResetPasswordDTO } from "../dto/auth.dto";
+import { minutesToMilliseconds } from "../../../common/time/time";
 import {
   UserAlreadyExistsError,
   CannotSignupAsSystemAdmin,
@@ -136,7 +137,7 @@ export class AuthService {
     await createPasswordReset({
       userId: user.id,
       otpHash: hashedOtp,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // expires in 10 minutes
+      expiresAt: new Date(Date.now() + minutesToMilliseconds(10)),
       createdAt: new Date(),
     });
 
