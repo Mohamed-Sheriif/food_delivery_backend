@@ -98,3 +98,23 @@ export async function updateUserPassword(
     .where({ id: userId })
     .update({ password_hash: newPassword });
 }
+
+export async function updateUser(
+  userId: number,
+  user: {
+    phone?: string;
+    name?: string;
+  },
+): Promise<User | undefined> {
+  const payload: Record<string, unknown> = {};
+
+  if (user.phone !== undefined) payload.phone = user.phone;
+  if (user.name !== undefined) payload.name = user.name;
+
+  const [row] = await db("users")
+    .where({ id: userId })
+    .update(payload)
+    .returning(USER_COLUMNS);
+
+  return row ? toEntity(row) : undefined;
+}

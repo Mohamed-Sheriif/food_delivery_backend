@@ -125,7 +125,7 @@ export class CustomerAddressController {
       await this.customerAddressService.delete(req.user?.userId!, Number(id));
 
       // 3. respond with no content
-      res.status(204).json({
+      res.status(200).json({
         message: "Address Deleted Successfully",
       });
     } catch (error) {

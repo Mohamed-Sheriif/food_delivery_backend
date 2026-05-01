@@ -1,6 +1,6 @@
 import { User } from "../entity/user.entity";
 import { UserNotFoundError } from "../errors";
-import { findUserById } from "../repository/users.repo";
+import { findUserById, updateUser } from "../repository/users.repo";
 
 export class UserService {
   getByUserId = async (userId: number): Promise<Partial<User>> => {
@@ -16,6 +16,25 @@ export class UserService {
       phone: user.phone,
       name: user.name,
       systemRole: user.systemRole,
+    };
+  };
+
+  updateUser = async (
+    userId: number,
+    user: { phone?: string; name?: string },
+  ): Promise<Partial<User>> => {
+    const updatedUser = await updateUser(userId, user);
+
+    if (!updatedUser) {
+      throw UserNotFoundError;
+    }
+
+    return {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      name: updatedUser.name,
+      systemRole: updatedUser.systemRole,
     };
   };
 }
