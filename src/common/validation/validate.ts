@@ -13,5 +13,6 @@ export async function validateBody<T extends Object>(
     const messages = errors.flatMap((e) => Object.values(e.constraints ?? {}));
     throw new AppError(messages.join(", '\n'"), 400);
   }
+
   return instance;
 }
