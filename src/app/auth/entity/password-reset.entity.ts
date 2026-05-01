@@ -1,21 +1,21 @@
 export class PasswordReset {
-    id: number;
-    userId: number;
-    otpHash: string;
-    expiresAt: Date;
-    consumedAt: Date;
-    createdAt: Date;
+  id: number;
+  userId: number;
+  otpHash: string;
+  expiresAt: Date;
+  consumedAt: Date | null;
+  createdAt: Date;
 
-    constructor(id: number, userId: number, otpHash: string, expiresAt: Date, consumedAt: Date, createdAt: Date) {
-        this.id = id;
-        this.userId = userId;
-        this.otpHash = otpHash;
-        this.expiresAt = expiresAt;
-        this.createdAt = createdAt;
-        this.consumedAt = consumedAt;
-    }
+  constructor(passwordReset: Partial<PasswordReset>) {
+    this.id = passwordReset.id!;
+    this.userId = passwordReset.userId!;
+    this.otpHash = passwordReset.otpHash!;
+    this.expiresAt = passwordReset.expiresAt!;
+    this.createdAt = passwordReset.createdAt!;
+    this.consumedAt = passwordReset.consumedAt ?? null;
+  }
 
-    isExpired(): boolean {
-        return this.expiresAt < new Date();
-    }
+  isExpired(): boolean {
+    return this.expiresAt < new Date();
+  }
 }
