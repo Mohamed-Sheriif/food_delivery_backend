@@ -27,7 +27,10 @@ export class CustomerAddressController {
       );
 
       // 3. respond with the created customer address
-      res.status(201).json(address);
+      res.status(201).json({
+        message: "Address Added Successfully",
+        address,
+      });
     } catch (error) {
       next(error);
     }
@@ -41,7 +44,9 @@ export class CustomerAddressController {
       );
 
       // 2. respond with the customer addresses
-      res.status(200).json(addresses);
+      res.status(200).json({
+        data: addresses,
+      });
     } catch (error) {
       next(error);
     }
@@ -81,7 +86,10 @@ export class CustomerAddressController {
       );
 
       // 4. respond with the updated customer address
-      res.status(200).json(address);
+      res.status(200).json({
+        message: "Address Updated Successfully",
+        address,
+      });
     } catch (error) {
       next(error);
     }
@@ -99,7 +107,10 @@ export class CustomerAddressController {
       );
 
       // 3. respond with the updated customer address
-      res.status(200).json(address);
+      res.status(200).json({
+        message: "Address Made Default Successfully",
+        address,
+      });
     } catch (error) {
       next(error);
     }
@@ -114,7 +125,9 @@ export class CustomerAddressController {
       await this.customerAddressService.delete(req.user?.userId!, Number(id));
 
       // 3. respond with no content
-      res.status(204).send();
+      res.status(204).json({
+        message: "Address Deleted Successfully",
+      });
     } catch (error) {
       next(error);
     }
