@@ -18,3 +18,8 @@ export const IncorrectCredentialsError = new AppError(
 export const InvalidOTPError = new AppError("Invalid OTP", 401);
 
 export const InvalidTokenError = new AppError("Invalid token", 401);
+
+export const RestaurantDataRequiredError = new AppError(
+  "Restaurant data is required",
+  400,
+);
