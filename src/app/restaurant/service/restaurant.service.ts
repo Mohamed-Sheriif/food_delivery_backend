@@ -6,12 +6,19 @@ import {
   createRestaurant,
   findAllRestaurants,
   findRestaurantById,
+  updateRestaurant,
+  updateRestaurantStatus,
 } from "../repository/restaurant.repo";
 import {
   RestaurantNotFoundError,
   UnauthorizedErrorOnlySystemAdmin,
+  UnauthorizedErrorOnlySystemAdminOrRestaurantOwner,
 } from "../errors";
-import { CreateRestaurantWithOwnerDTO } from "../dto/restaurant.dto";
+import {
+  CreateRestaurantWithOwnerDTO,
+  UpdateRestauranDTO,
+  UpdateRestaurantStatusDTO,
+} from "../dto/restaurant.dto";
 import { SystemRole } from "../../user/enums";
 import {
   createUser,
@@ -128,6 +135,60 @@ export class RestaurantService {
     }
 
     return restaurant;
+  };
+
+  update = async (
+    authenticatedUser: {
+      userId: number;
+      role: string;
+    },
+    id: number,
+    data: UpdateRestauranDTO,
+  ): Promise<Restaurant> => {
+    // 1. get restaurant by id
+    const restaurant = await findRestaurantById(id);
+
+    // 2. check logged in user is system admin or the owner of the restaurant
+    if (
+      authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
+      authenticatedUser.userId !== Number(restaurant?.ownerId)
+    ) {
+      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+    }
+
+    // 3. check if restaurant exists
+    if (!restaurant) {
+      throw RestaurantNotFoundError;
+    }
+
+    // 4. update restaurant
+    const updatedRestaurant = await updateRestaurant(id, data);
+
+    return updatedRestaurant!;
+  };
+
+  updateStatus = async (
+    authenticatedUserRole: string,
+    id: number,
+    data: UpdateRestaurantStatusDTO,
+  ): Promise<Restaurant> => {
+    // 1. get restaurant by id
+    const restaurant = await findRestaurantById(id);
+
+    // 2. check logged in user is system admin
+    if (authenticatedUserRole !== SystemRole.SYSTEM_ADMIN) {
+      throw UnauthorizedErrorOnlySystemAdmin;
+    }
+
+    // 3. check if restaurant ex
+    if (!restaurant) {
+      throw RestaurantNotFoundError;
+    }
+
+    // 3. update restaurant status
+    const updatedRestaurant = await updateRestaurantStatus(id, data.status);
+
+    return updatedRestaurant!;
   };
 }
 

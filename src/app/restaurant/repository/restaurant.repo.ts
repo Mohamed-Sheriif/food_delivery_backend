@@ -66,3 +66,27 @@ export async function findRestaurantById(
 
   return row ? toEntity(row) : undefined;
 }
+
+export async function updateRestaurant(
+  id: number,
+  restaurant: Partial<Restaurant>,
+): Promise<Restaurant | undefined> {
+  const [row] = await db("restaurants")
+    .where("id", id)
+    .update(restaurant)
+    .returning(RESTAURANT_COLUMNS);
+
+  return row ? toEntity(row) : undefined;
+}
+
+export async function updateRestaurantStatus(
+  id: number,
+  status: string,
+): Promise<Restaurant | undefined> {
+  const [row] = await db("restaurants")
+    .where("id", id)
+    .update({ status })
+    .returning(RESTAURANT_COLUMNS);
+
+  return row ? toEntity(row) : undefined;
+}

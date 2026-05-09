@@ -1,14 +1,17 @@
 import { Type } from "class-transformer";
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsNumberString,
+  IsOptional,
   IsString,
   IsStrongPassword,
   MaxLength,
   MinLength,
   ValidateNested,
 } from "class-validator";
+import { RestaurantStatus } from "../enums";
 
 export class CreateRestaurantWithOwnerDTO {
   @IsString()
@@ -60,4 +63,24 @@ export class RestaurantParamsDTO {
   @IsNumberString()
   @IsNotEmpty()
   id!: string;
+}
+
+export class UpdateRestauranDTO {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  logoURL?: string;
+
+  @IsOptional()
+  @IsString()
+  primaryCountry?: string;
+}
+
+export class UpdateRestaurantStatusDTO {
+  @IsNotEmpty()
+  @IsEnum(RestaurantStatus)
+  status!: RestaurantStatus;
 }
