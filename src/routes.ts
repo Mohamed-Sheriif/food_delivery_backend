@@ -3,6 +3,7 @@ import { authRouter } from "./app/auth/routes";
 import { customerAddressRouter } from "./app/customer-address/routes";
 import { healthRouter } from "./app/health/health.routes";
 import { userRouter } from "./app/user/routes";
+import { restaurantRouter } from "./app/restaurant/routes";
 
 export const routes = Router();
 
@@ -18,4 +19,6 @@ routes.use("/auth", authRouter);
 routes.use("/customer-addresses", customerAddressRouter);
 
 // menu
+
 // restaurant
+routes.use("/restaurants", restaurantRouter);

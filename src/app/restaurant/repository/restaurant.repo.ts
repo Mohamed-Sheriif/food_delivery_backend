@@ -52,6 +52,7 @@ export async function findAllRestaurants(): Promise<Restaurant[]> {
   const rows = await db("restaurants")
     .select(RESTAURANT_COLUMNS)
     .orderBy("created_at", "desc");
+
   return rows.map(toEntity);
 }
 

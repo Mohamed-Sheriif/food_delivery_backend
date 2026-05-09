@@ -2,7 +2,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/server",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "migration:make": "npx tsx node_modules/knex/bin/cli.js migrate:make --knexfile src/common/knex/knexfile.ts",
+    "migration:latest": "npx tsx node_modules/knex/bin/cli.js migrate:latest --knexfile src/common/knex/knexfile.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
