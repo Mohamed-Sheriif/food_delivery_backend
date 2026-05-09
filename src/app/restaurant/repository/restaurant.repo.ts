@@ -71,9 +71,23 @@ export async function updateRestaurant(
   id: number,
   restaurant: Partial<Restaurant>,
 ): Promise<Restaurant | undefined> {
+  const payload: Record<string, unknown> = {};
+
+  if (restaurant.name !== undefined) payload.name = restaurant.name;
+  if (restaurant.logoURL !== undefined) payload.logo_url = restaurant.logoURL;
+  if (restaurant.primaryCountry !== undefined) {
+    payload.primary_country = restaurant.primaryCountry;
+  }
+
+  if (Object.keys(payload).length === 0) {
+    return findRestaurantById(id);
+  }
+
+  payload.updated_at = new Date();
+
   const [row] = await db("restaurants")
     .where("id", id)
-    .update(restaurant)
+    .update(payload)
     .returning(RESTAURANT_COLUMNS);
 
   return row ? toEntity(row) : undefined;
@@ -85,7 +99,7 @@ export async function updateRestaurantStatus(
 ): Promise<Restaurant | undefined> {
   const [row] = await db("restaurants")
     .where("id", id)
-    .update({ status })
+    .update({ status, updated_at: new Date(), status_updated_at: new Date() })
     .returning(RESTAURANT_COLUMNS);
 
   return row ? toEntity(row) : undefined;

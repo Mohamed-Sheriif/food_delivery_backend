@@ -8,7 +8,10 @@ export async function validateBody<T extends Object>(
 ): Promise<T> {
   // const register = new DTO(body)
   const instance = plainToInstance(cls, body); // dto: {email, phone, password} , body: {email, phone, system_role}
-  const errors = await validate(instance, { whitelist: true });
+  const errors = await validate(instance, {
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  });
 
   if (errors.length > 0) {
     const messages = errors.flatMap((e) => Object.values(e.constraints ?? {}));

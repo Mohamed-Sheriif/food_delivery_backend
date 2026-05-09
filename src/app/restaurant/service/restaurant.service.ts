@@ -9,11 +9,7 @@ import {
   updateRestaurant,
   updateRestaurantStatus,
 } from "../repository/restaurant.repo";
-import {
-  RestaurantNotFoundError,
-  UnauthorizedErrorOnlySystemAdmin,
-  UnauthorizedErrorOnlySystemAdminOrRestaurantOwner,
-} from "../errors";
+import { RestaurantNotFoundError } from "../errors";
 import {
   CreateRestaurantWithOwnerDTO,
   UpdateRestauranDTO,
@@ -28,6 +24,10 @@ import { UserAlreadyExistsError } from "../../auth/errors";
 import { hashPassword } from "../../auth/utils";
 import { db } from "../../../common/knex/knex";
 import { User } from "../../user/entity/user.entity";
+import {
+  UnauthorizedErrorOnlySystemAdmin,
+  UnauthorizedErrorOnlySystemAdminOrRestaurantOwner,
+} from "../../../common/auth/errors";
 
 export class RestaurantService {
   create = async (

@@ -114,6 +114,11 @@ export async function updateUser(
 
   if (user.phone !== undefined) payload.phone = user.phone;
   if (user.name !== undefined) payload.name = user.name;
+  if (Object.keys(payload).length === 0) {
+    return findUserById(userId);
+  }
+
+  payload.updated_at = new Date();
 
   const [row] = await db("users")
     .where({ id: userId })
