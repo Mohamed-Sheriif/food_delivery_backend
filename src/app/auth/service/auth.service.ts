@@ -14,6 +14,7 @@ import {
   IncorrectCredentialsError,
   InvalidOTPError,
   InvalidTokenError,
+  RestaurantDataRequiredError,
 } from "../errors";
 import {
   createPasswordReset,
@@ -29,8 +30,17 @@ import {
   hashOTP,
   verifyRefreshToken,
 } from "../utils";
+import {
+  RestaurantService,
+  restaurantService,
+} from "../../restaurant/service/restaurant.service";
+import { Restaurant } from "../../restaurant/entity/restaurant.entity";
+import { User } from "../../user/entity/user.entity";
+import { db } from "../../../common/knex/knex";
 
 export class AuthService {
+  constructor(private readonly restaurantService: RestaurantService) {}
+
   register = async (data: RegisterDTO) => {
     if (data.role == SystemRole.SYSTEM_ADMIN) {
       throw CannotSignupAsSystemAdmin;
@@ -45,24 +55,52 @@ export class AuthService {
     // 3. hashPassword
     const hashedPassword = await hashPassword(data.password);
 
-    // 4. create user
+    // 4. start transaction
     const now = new Date();
-    const user = await createUser({
-      email: data.email,
-      phone: data.phone,
-      name: data.name,
-      passwordHash: hashedPassword,
-      systemRole: data.role,
-      createdAt: now,
-      updatedAt: now,
-    });
+    const trx = await db.transaction();
+    let user: User;
+    let restaurant: Restaurant | undefined;
+    try {
+      // 5. create user
+      user = await createUser(
+        {
+          email: data.email,
+          phone: data.phone,
+          name: data.name,
+          passwordHash: hashedPassword,
+          systemRole: data.role,
+          createdAt: now,
+          updatedAt: now,
+        },
+        trx,
+      );
 
-    // 5. create access token , refresh token
+      // 6. check if user is restaurant user, then call restaurant service to create restaurant
+      if (data.role === SystemRole.RESTAURANT_USER) {
+        if (data.restaurant === undefined) {
+          throw RestaurantDataRequiredError;
+        }
+
+        restaurant = await this.restaurantService.create(
+          user.id,
+          data.restaurant,
+          trx,
+        );
+      }
+
+      // 7. commit transaction
+      await trx.commit();
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
+
+    // 8. create access token , refresh token
     const payload = { userId: user.id, role: data.role, email: user.email };
     const accessToken = createAccessToken(payload);
     const refreshToken = createRefreshToken(payload);
 
-    // 6. return tokens and user data
+    // 9. return tokens and user data
     return {
       message: "Successfully registered user",
       accessToken,
@@ -74,6 +112,7 @@ export class AuthService {
         systemRole: user.systemRole,
         createdAt: user.createdAt,
       },
+      restaurant,
     };
   };
 
@@ -214,4 +253,4 @@ export class AuthService {
   };
 }
 
-export const authService = new AuthService();
+export const authService = new AuthService(restaurantService);
