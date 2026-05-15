@@ -4,6 +4,7 @@ import { customerAddressRouter } from "./app/customer-address/routes";
 import { healthRouter } from "./app/health/health.routes";
 import { userRouter } from "./app/user/routes";
 import { restaurantRouter } from "./app/restaurant/routes";
+import { branchRouter } from "./app/branch/routes";
 
 export const routes = Router();
 
@@ -19,6 +20,9 @@ routes.use("/auth", authRouter);
 routes.use("/customer-addresses", customerAddressRouter);
 
 // menu
+
+// branch
+routes.use("/", branchRouter);
 
 // restaurant
 routes.use("/restaurants", restaurantRouter);
