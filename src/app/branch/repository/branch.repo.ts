@@ -1,4 +1,5 @@
 import { db } from "../../../common/knex/knex";
+import { UpdateBranchStatusDTO } from "../dto/branch.dto";
 import { Branch } from "../entity/branch.entity";
 
 const BRANCH_COLUMNS = [
@@ -93,4 +94,73 @@ export async function findNearbyBranches(
   );
 
   return result.rows;
+}
+
+export async function findBranchById(id: number): Promise<Branch | undefined> {
+  const row = await db("restaurants_branches")
+    .select(BRANCH_COLUMNS)
+    .where("id", id)
+    .whereNull("deleted_at")
+    .first();
+
+  return row ? toEntity(row) : undefined;
+}
+
+export async function updateBranch(
+  id: number,
+  branch: Partial<Branch>,
+): Promise<Branch | undefined> {
+  const payload: Record<string, unknown> = {};
+
+  if (branch.countryCode !== undefined)
+    payload.country_code = branch.countryCode;
+  if (branch.addressText !== undefined)
+    payload.address_text = branch.addressText;
+  if (branch.label !== undefined) payload.label = branch.label;
+  if (branch.lat !== undefined) payload.lat = branch.lat;
+  if (branch.lng !== undefined) payload.lng = branch.lng;
+  if (branch.isActive !== undefined) payload.is_active = branch.isActive;
+  if (branch.opensAt !== undefined) payload.opens_at = branch.opensAt;
+  if (branch.closesAt !== undefined) payload.closes_at = branch.closesAt;
+  if (branch.acceptOrders !== undefined)
+    payload.accept_orders = branch.acceptOrders;
+  if (branch.deliveryRadius !== undefined)
+    payload.delivery_radius = branch.deliveryRadius;
+  if (branch.currency !== undefined) payload.currency = branch.currency;
+
+  if (Object.keys(payload).length === 0) {
+    return findBranchById(id);
+  }
+
+  payload.updated_at = new Date();
+
+  const [row] = await db("restaurants_branches")
+    .where("id", id)
+    .update(payload)
+    .returning(BRANCH_COLUMNS);
+
+  return row ? toEntity(row) : undefined;
+}
+
+export async function updateBranchStatus(
+  id: number,
+  data: UpdateBranchStatusDTO,
+): Promise<Branch | undefined> {
+  const payload: Record<string, unknown> = {};
+
+  if (data.isActive !== undefined) payload.is_active = data.isActive;
+  if (data.commission !== undefined) payload.commission = data.commission;
+
+  if (Object.keys(payload).length === 0) {
+    return findBranchById(id);
+  }
+
+  payload.updated_at = new Date();
+
+  const [row] = await db("restaurants_branches")
+    .where("id", id)
+    .update(payload)
+    .returning(BRANCH_COLUMNS);
+
+  return row ? toEntity(row) : undefined;
 }

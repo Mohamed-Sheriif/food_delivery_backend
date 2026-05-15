@@ -5,9 +5,11 @@ import {
   IsNotEmpty,
   IsNumber,
   IsNumberString,
+  IsOptional,
   IsString,
 } from "class-validator";
 import { Currency } from "../enums";
+import { PartialType } from "@nestjs/mapped-types";
 
 export class CreateBranchDTO {
   @IsString()
@@ -57,6 +59,12 @@ export class BranchParamsDTO {
   restaurantId!: string;
 }
 
+export class UpdateBranchParamsDTO {
+  @IsNumberString()
+  @IsNotEmpty()
+  id!: string;
+}
+
 export class FindNearbyBranchesDTO {
   @IsNumberString()
   @IsNotEmpty()
@@ -65,4 +73,16 @@ export class FindNearbyBranchesDTO {
   @IsNumberString()
   @IsNotEmpty()
   lng!: string;
+}
+
+export class UpdateBranchDTO extends PartialType(CreateBranchDTO) {}
+
+export class UpdateBranchStatusDTO {
+  @IsBoolean()
+  @IsNotEmpty()
+  isActive!: boolean;
+
+  @IsInt()
+  @IsOptional()
+  commission?: number;
 }

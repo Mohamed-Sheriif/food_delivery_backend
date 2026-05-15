@@ -1,15 +1,31 @@
-import { UnauthorizedErrorOnlySystemAdminOrRestaurantOwner } from "../../../common/auth/errors";
+import {
+  UnauthorizedErrorOnlySystemAdmin,
+  UnauthorizedErrorOnlySystemAdminOrRestaurantOwner,
+} from "../../../common/auth/errors";
+import { RestaurantNotFoundError } from "../../restaurant/errors";
 import {
   restaurantService,
   RestaurantService,
 } from "../../restaurant/service/restaurant.service";
 import { SystemRole } from "../../user/enums";
-import { CreateBranchDTO } from "../dto/branch.dto";
+import {
+  CreateBranchDTO,
+  UpdateBranchDTO,
+  UpdateBranchStatusDTO,
+} from "../dto/branch.dto";
 import { Branch } from "../entity/branch.entity";
-import { createBranch, findNearbyBranches } from "../repository/branch.repo";
+import { BranchNotFoundError } from "../errors";
+import {
+  createBranch,
+  findBranchById,
+  findNearbyBranches,
+  updateBranch,
+  updateBranchStatus,
+} from "../repository/branch.repo";
 
 export class BranchService {
   constructor(private readonly restaurantService: RestaurantService) {}
+
   createBranch = async (
     authenticatedUser: {
       userId: number;
@@ -57,6 +73,82 @@ export class BranchService {
     const branches = await findNearbyBranches(lat, lng);
 
     return branches;
+  };
+
+  updateBranch = async (
+    authenticatedUser: {
+      userId: number;
+      role: string;
+    },
+    id: number,
+    data: UpdateBranchDTO,
+  ): Promise<Branch> => {
+    // 1. get branch by id
+    const branch = await findBranchById(id);
+
+    // 2. throw error if branch not found
+    if (!branch) {
+      throw BranchNotFoundError;
+    }
+
+    // 4. get restaurant by id
+    const restaurant = await this.restaurantService.findById(
+      branch.restaurantId,
+    );
+
+    // 4. throw error if restaurant not found
+    if (!restaurant) {
+      throw RestaurantNotFoundError;
+    }
+
+    // 5. check logged in user is system admin or the owner of the restaurant
+    if (
+      authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
+      authenticatedUser.userId !== Number(restaurant?.ownerId)
+    ) {
+      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+    }
+
+    // 6. update branch
+    const updatedBranch = await updateBranch(id, data);
+
+    // 7. return updated branch
+    return updatedBranch!;
+  };
+
+  updateBranchStatus = async (
+    authenticatedUserRole: string,
+    id: number,
+    data: UpdateBranchStatusDTO,
+  ): Promise<Branch> => {
+    // 1. get branch by id
+    const branch = await findBranchById(id);
+
+    // 2. throw error if branch not found
+    if (!branch) {
+      throw BranchNotFoundError;
+    }
+
+    // 3. get restaurant by id
+    const restaurant = await this.restaurantService.findById(
+      branch.restaurantId,
+    );
+
+    // 4. throw error if restaurant not found
+    if (!restaurant) {
+      throw RestaurantNotFoundError;
+    }
+
+    // 5. check logged in user is system admin
+    if (authenticatedUserRole !== SystemRole.SYSTEM_ADMIN) {
+      throw UnauthorizedErrorOnlySystemAdmin;
+    }
+
+    // 6. update branch status
+    const updatedBranch = await updateBranchStatus(id, data);
+
+    // 7. return updated branch
+    return updatedBranch!;
   };
 }
 
