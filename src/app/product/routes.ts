@@ -7,3 +7,9 @@ export const productRouter = Router();
 productRouter.post("/restaurants/:restaurantId/categories", authenticate, productController.createProductCategory);
 productRouter.get("/restaurants/:restaurantId/categories", productController.findAllProductCategoriesByRestaurantId);
 productRouter.get("/branches/:branchId/products", productController.findByBranch);
+productRouter.get(
+  "/restaurants/:restaurantId/products",
+  authenticate,
+  productController.findByRestaurant,
+);
+productRouter.get("/products/:id", productController.findById);

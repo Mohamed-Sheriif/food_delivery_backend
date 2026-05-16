@@ -6,10 +6,11 @@ import { RestaurantService, restaurantService } from "../../restaurant/service/r
 import { SystemRole } from "../../user/enums";
 import { CreateProductCategoryDTO } from "../dto/product-category.dto";
 import { BranchProduct } from "../entity/branch-product.entity";
+import { Product } from "../entity/product.entity";
 import { ProductCategory } from "../entity/product-category.entity";
-import { ProductCategoryAlreadyExistsError } from "../errors";
+import { ProductCategoryAlreadyExistsError, ProductNotFoundError } from "../errors";
 import { createProductCategory, findAllProductCategoriesByRestaurantId, findProductCategoryByRestaurantIdAndName } from "../repository/product-category.repo";
-import { findProductsByBranch } from "../repository/product.repo";
+import { findProductById, findProductsByBranch, findProductsByRestaurant } from "../repository/product.repo";
 
 
 export class ProductService {
@@ -87,6 +88,49 @@ export class ProductService {
 
     // 4. return products
     return products;
+  };
+
+  findByRestaurant = async (
+    authenticatedUser: {
+      userId: number;
+      role: string;
+    },
+    restaurantId: number,
+  ): Promise<Product[]> => {
+    // 1. get restaurant by id
+    const restaurant = await this.restaurantService.findById(restaurantId);
+
+    // 2. throw error if restaurant not found
+    if (!restaurant) {
+      throw RestaurantNotFoundError;
+    }
+
+    // 3. check logged in user is system admin or the owner of the restaurant
+    if (
+      authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
+      authenticatedUser.userId !== Number(restaurant.ownerId)
+    ) {
+      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+    }
+
+    // 4. get products by restaurant id
+    const products = await findProductsByRestaurant(restaurantId);
+
+    // 5. return products
+    return products;
+  };
+
+  findById = async (id: number): Promise<Product> => {
+    // 1. get product by id
+    const product = await findProductById(id);
+
+    // 2. throw error if product not found
+    if (!product) {
+      throw ProductNotFoundError;
+    }
+
+    // 3. return product
+    return product;
   };
 }
 

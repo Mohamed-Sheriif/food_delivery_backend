@@ -5,3 +5,15 @@ export class BranchProductsParamsDTO {
   @IsNotEmpty()
   branchId!: string;
 }
+
+export class RestaurantProductsParamsDTO {
+  @IsNumberString()
+  @IsNotEmpty()
+  restaurantId!: string;
+}
+
+export class ProductParamsDTO {
+  @IsNumberString()
+  @IsNotEmpty()
+  id!: string;
+}

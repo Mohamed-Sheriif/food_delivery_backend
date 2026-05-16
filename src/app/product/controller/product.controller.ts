@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { productService, ProductService } from "../service/product.service";
 import { validateBody } from "../../../common/validation/validate";
 import { CreateProductCategoryDTO, ProductCategoryParamsDTO } from "../dto/product-category.dto";
-import { BranchProductsParamsDTO } from "../dto/product.dto";
+import { BranchProductsParamsDTO, ProductParamsDTO, RestaurantProductsParamsDTO } from "../dto/product.dto";
 
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
@@ -65,6 +65,51 @@ export class ProductController {
       res.status(200).json({
         message: "Products found successfully",
         data: products,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  findByRestaurant = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. validate req.params
+      const { restaurantId } = await validateBody(
+        RestaurantProductsParamsDTO,
+        req.params,
+      );
+
+      // 2. call service
+      const products = await this.productService.findByRestaurant(
+        {
+          userId: req.user!.userId,
+          role: req.user!.role,
+        },
+        Number(restaurantId),
+      );
+
+      // 3. respond
+      res.status(200).json({
+        message: "Products found successfully",
+        data: products,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  findById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. validate req.params
+      const { id } = await validateBody(ProductParamsDTO, req.params);
+
+      // 2. call service
+      const product = await this.productService.findById(Number(id));
+
+      // 3. respond
+      res.status(200).json({
+        message: "Product found successfully",
+        data: product,
       });
     } catch (error) {
       next(error);

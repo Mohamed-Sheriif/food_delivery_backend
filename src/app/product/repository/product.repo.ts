@@ -1,7 +1,42 @@
 import { db } from "../../../common/knex/knex";
 import { BranchProduct } from "../entity/branch-product.entity";
+import { Product } from "../entity/product.entity";
 
-function toEntity(row: {
+const PRODUCT_COLUMNS = [
+  "id",
+  "name",
+  "description",
+  "image_url",
+  "restaurant_id",
+  "category_id",
+  "created_at",
+  "updated_at",
+  "deleted_at",
+];
+
+function toProductEntity(row: {
+  id: number;
+  name: string;
+  description: string;
+  image_url: string;
+  restaurant_id: number;
+  category_id: number;
+  created_at: Date;
+  updated_at: Date;
+}): Product {
+  return new Product({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    imageUrl: row.image_url,
+    restaurantId: row.restaurant_id,
+    categoryId: row.category_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+function toBranchProductEntity(row: {
   id: number;
   name: string;
   description: string;
@@ -50,5 +85,28 @@ export async function findProductsByBranch(
     .whereNull("pbd.deleted_at")
     .whereNull("pc.deleted_at");
 
-  return rows.map(toEntity);
+  return rows.map(toBranchProductEntity);
+}
+
+export async function findProductsByRestaurant(
+  restaurantId: number,
+): Promise<Product[]> {
+  const rows = await db("products")
+    .select(PRODUCT_COLUMNS)
+    .where("restaurant_id", restaurantId)
+    .whereNull("deleted_at");
+
+  return rows.map(toProductEntity);
+}
+
+export async function findProductById(
+  id: number,
+): Promise<Product | undefined> {
+  const row = await db("products")
+    .select(PRODUCT_COLUMNS)
+    .where("id", id)
+    .whereNull("deleted_at")
+    .first();
+
+  return row ? toProductEntity(row) : undefined;
 }
