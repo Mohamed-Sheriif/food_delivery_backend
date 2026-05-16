@@ -1,11 +1,15 @@
 import { UnauthorizedErrorOnlySystemAdminOrRestaurantOwner } from "../../../common/auth/errors";
+import { BranchNotFoundError } from "../../branch/errors";
+import { findBranchById } from "../../branch/repository/branch.repo";
 import { RestaurantNotFoundError } from "../../restaurant/errors";
 import { RestaurantService, restaurantService } from "../../restaurant/service/restaurant.service";
 import { SystemRole } from "../../user/enums";
 import { CreateProductCategoryDTO } from "../dto/product-category.dto";
+import { BranchProduct } from "../entity/branch-product.entity";
 import { ProductCategory } from "../entity/product-category.entity";
 import { ProductCategoryAlreadyExistsError } from "../errors";
 import { createProductCategory, findAllProductCategoriesByRestaurantId, findProductCategoryByRestaurantIdAndName } from "../repository/product-category.repo";
+import { findProductsByBranch } from "../repository/product.repo";
 
 
 export class ProductService {
@@ -67,6 +71,22 @@ export class ProductService {
 
     // 2. return product categories
     return productCategories;
+  };
+
+  findByBranch = async (branchId: number): Promise<BranchProduct[]> => {
+    // 1. get branch by id
+    const branch = await findBranchById(branchId);
+
+    // 2. throw error if branch not found
+    if (!branch) {
+      throw BranchNotFoundError;
+    }
+    
+    // 3. get products by branch id
+    const products = await findProductsByBranch(branchId);
+
+    // 4. return products
+    return products;
   };
 }
 
