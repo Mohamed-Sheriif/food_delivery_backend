@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { productService, ProductService } from "../service/product.service";
 import { validateBody } from "../../../common/validation/validate";
 import { CreateProductCategoryDTO, ProductCategoryParamsDTO } from "../dto/product-category.dto";
-import { BranchProductsParamsDTO, ProductParamsDTO, RestaurantProductsParamsDTO } from "../dto/product.dto";
+import { BranchProductsParamsDTO, CreateProductDTO, ProductParamsDTO, RestaurantProductsParamsDTO } from "../dto/product.dto";
 
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
@@ -29,6 +29,34 @@ export class ProductController {
       res.status(201).json({
         message: "Product category created successfully",
         data: productCategory,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  createProduct = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. validate req.body
+      const data = await validateBody(CreateProductDTO, req.body);
+
+      // 2. validate req.params
+      const { restaurantId } = await validateBody(RestaurantProductsParamsDTO, req.params);
+
+      // 3. call service
+      const product = await this.productService.createProduct(
+        {
+          userId: req.user!.userId,
+          role: req.user!.role,
+        },
+        Number(restaurantId),
+        data,
+      );
+
+      // 4. respond
+      res.status(201).json({
+        message: "Product created successfully",
+        data: product,
       });
     } catch (error) {
       next(error);

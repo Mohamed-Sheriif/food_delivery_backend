@@ -1,3 +1,4 @@
+import { Knex } from "knex";
 import { db } from "../../../common/knex/knex";
 import { BranchProduct } from "../entity/branch-product.entity";
 import { Product } from "../entity/product.entity";
@@ -60,6 +61,25 @@ function toBranchProductEntity(row: {
     stock: row.stock,
     isAvailable: row.is_available,
   });
+}
+
+export async function createProduct(
+  product: Partial<Product>,
+  conn: Knex= db
+): Promise<Product> {
+  const [row] = await conn("products")
+    .insert({
+        name: product.name,
+        description: product.description,
+        image_url: product.imageUrl,
+        restaurant_id: product.restaurantId,
+        category_id: product.categoryId,
+        created_at: product.createdAt,
+        updated_at: product.updatedAt,
+      })
+    .returning(PRODUCT_COLUMNS);
+
+  return toProductEntity(row);
 }
 
 export async function findProductsByBranch(

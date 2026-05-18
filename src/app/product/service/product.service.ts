@@ -10,7 +10,9 @@ import { Product } from "../entity/product.entity";
 import { ProductCategory } from "../entity/product-category.entity";
 import { ProductCategoryAlreadyExistsError, ProductNotFoundError } from "../errors";
 import { createProductCategory, findAllProductCategoriesByRestaurantId, findProductCategoryByRestaurantIdAndName } from "../repository/product-category.repo";
-import { findProductById, findProductsByBranch, findProductsByRestaurant } from "../repository/product.repo";
+import { createProduct, findProductById, findProductsByBranch, findProductsByRestaurant } from "../repository/product.repo";
+import { CreateProductDTO } from "../dto/product.dto";
+import { db } from "../../../common/knex/knex";
 
 
 export class ProductService {
@@ -62,6 +64,68 @@ export class ProductService {
 
     // 6. return product category
     return newProductCategory;
+  };
+
+  createProduct = async (
+    authenticatedUser: {
+      userId: number;
+      role: string;
+    },
+    restaurantId: number,
+    data: CreateProductDTO,
+  ): Promise<Product> => {
+    // 1. get restaurant by id
+    const restaurant = await this.restaurantService.findById(restaurantId);
+
+    // 2. throw error if restaurant not found
+    if (!restaurant) {
+      throw RestaurantNotFoundError;
+    }
+
+    // 3. check logged in user is system admin or the owner of the restaurant
+    if (
+      authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
+      authenticatedUser.userId !== Number(restaurant.ownerId)
+    ) {
+      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+    }
+
+    // 4. check if product category exists (case-insensitive), if not create it
+    const now = new Date();
+    const categoryName = data.categoryName;
+    const normalizedCategoryName = categoryName.toLowerCase();
+    const trx = await db.transaction();
+    let category = await findProductCategoryByRestaurantIdAndName(restaurantId, normalizedCategoryName);
+    try {
+      if (!category) {
+        category = await createProductCategory({
+          name: categoryName,
+          restaurantId,
+          createdAt: now,
+          updatedAt: now,
+        }, trx);
+      }
+
+      // 5. create product
+      const newProduct = await createProduct({
+        name: data.name,
+        description: data.description,
+        imageUrl: data.imageUrl,
+        restaurantId,
+        categoryId: category.id,
+        createdAt: now,
+        updatedAt: now,
+      }, trx);
+
+      // 6. commit transaction
+      await trx.commit();
+
+      // 7. return product
+      return newProduct;
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
   };
 
   findAllProductCategoriesByRestaurantId = async (

@@ -1,3 +1,4 @@
+import { Knex } from "knex";
 import { db } from "../../../common/knex/knex";
 import { ProductCategory } from "../entity/product-category.entity";
 
@@ -21,9 +22,10 @@ function toEntity(row: any) {
 }
 
 export async function createProductCategory(
-  productCategory: Partial<ProductCategory>
+  productCategory: Partial<ProductCategory>,
+  conn: Knex= db
 ): Promise<ProductCategory> {
-  const [row] = await db("product_categories")
+  const [row] = await conn("product_categories")
     .insert({
       name: productCategory.name,
       restaurant_id: productCategory.restaurantId,
