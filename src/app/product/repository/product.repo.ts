@@ -121,12 +121,41 @@ export async function findProductsByRestaurant(
 
 export async function findProductById(
   id: number,
+  conn: Knex = db,
 ): Promise<Product | undefined> {
-  const row = await db("products")
+  const row = await conn("products")
     .select(PRODUCT_COLUMNS)
     .where("id", id)
     .whereNull("deleted_at")
     .first();
+
+  return row ? toProductEntity(row) : undefined;
+}
+
+export async function updateProduct(
+  id: number,
+  product: Partial<Product>,
+  conn: Knex = db,
+): Promise<Product | undefined> {
+  const payload: Record<string, unknown> = {};
+
+  if (product.name !== undefined) payload.name = product.name;
+  if (product.description !== undefined)
+    payload.description = product.description;
+  if (product.imageUrl !== undefined) payload.image_url = product.imageUrl;
+  if (product.categoryId !== undefined) payload.category_id = product.categoryId;
+
+  if (Object.keys(payload).length === 0) {
+    return findProductById(id, conn);
+  }
+
+  payload.updated_at = new Date();
+
+  const [row] = await conn("products")
+    .where("id", id)
+    .whereNull("deleted_at")
+    .update(payload)
+    .returning(PRODUCT_COLUMNS);
 
   return row ? toProductEntity(row) : undefined;
 }

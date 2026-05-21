@@ -8,11 +8,28 @@ import { CreateProductCategoryDTO } from "../dto/product-category.dto";
 import { BranchProduct } from "../entity/branch-product.entity";
 import { Product } from "../entity/product.entity";
 import { ProductCategory } from "../entity/product-category.entity";
-import { ProductCategoryAlreadyExistsError, ProductNotFoundError } from "../errors";
+import {
+  BranchIdRequiredForBranchFieldsError,
+  BranchNotBelongToProductRestaurantError,
+  ProductBranchDetailsNotFoundError,
+  ProductCategoryAlreadyExistsError,
+  ProductNotFoundError,
+} from "../errors";
 import { createProductCategory, findAllProductCategoriesByRestaurantId, findProductCategoryByRestaurantIdAndName } from "../repository/product-category.repo";
-import { createProduct, findProductById, findProductsByBranch, findProductsByRestaurant } from "../repository/product.repo";
-import { CreateProductDTO } from "../dto/product.dto";
+import {
+  findProductBranchDetailsByProductAndBranch,
+  updateBranchDetails,
+} from "../repository/product-branch-details.repo";
+import {
+  createProduct,
+  findProductById,
+  findProductsByBranch,
+  findProductsByRestaurant,
+  updateProduct,
+} from "../repository/product.repo";
+import { CreateProductDTO, UpdateProductDTO } from "../dto/product.dto";
 import { db } from "../../../common/knex/knex";
+import { ProductBranchDetails } from "../entity/product-branch-details.entity";
 
 
 export class ProductService {
@@ -195,6 +212,156 @@ export class ProductService {
 
     // 3. return product
     return product;
+  };
+
+  update = async (
+    authenticatedUser: {
+      userId: number;
+      role: string;
+    },
+    productId: number,
+    data: UpdateProductDTO,
+    branchId?: number,
+  ): Promise<{ product: Product; branchDetails?: ProductBranchDetails }> => {
+    // 1. get product by id
+    const product = await findProductById(productId);
+    if (!product) {
+      throw ProductNotFoundError;
+    }
+
+    // 2. get restaurant by id
+    const restaurant = await this.restaurantService.findById(product.restaurantId);
+    if (!restaurant) {
+      throw RestaurantNotFoundError;
+    }
+
+    // 3. check logged in user is system admin or the owner of the restaurant
+    if (
+      authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
+      authenticatedUser.userId !== Number(restaurant.ownerId)
+    ) {
+      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+    }
+
+    // 4. check if branch id is provided if there are branch fields
+    const hasBranchFields =
+      data.price !== undefined ||
+      data.stock !== undefined ||
+      data.isAvailable !== undefined;
+    if (hasBranchFields && branchId === undefined) {
+      throw BranchIdRequiredForBranchFieldsError;
+    }
+
+    // 5. check if should update branch details
+    const shouldUpdateBranchDetails = branchId !== undefined && hasBranchFields;
+
+    if (shouldUpdateBranchDetails) {
+      // 6. get branch by id
+      const branch = await findBranchById(branchId);
+      if (!branch) {
+        throw BranchNotFoundError;
+      }
+
+      // 7. check if branch belongs to the product's restaurant
+      if (branch.restaurantId !== product.restaurantId) {
+        throw BranchNotBelongToProductRestaurantError;
+      }
+
+      // 8. check if product branch details exists
+      const existingDetails = await findProductBranchDetailsByProductAndBranch(
+        productId,
+        branchId,
+      );
+      if (!existingDetails) {
+        throw ProductBranchDetailsNotFoundError;
+      }
+    }
+
+    const productUpdate: Partial<Product> = {};
+    if (data.name !== undefined) productUpdate.name = data.name;
+    if (data.description !== undefined) productUpdate.description = data.description;
+    if (data.imageUrl !== undefined) productUpdate.imageUrl = data.imageUrl;
+
+    // 9. check if there are product fields
+    const hasProductFields =
+      data.name !== undefined ||
+      data.description !== undefined ||
+      data.imageUrl !== undefined ||
+      data.categoryName !== undefined;
+
+    // 10. check if needs transaction
+    const needsTransaction = hasProductFields && shouldUpdateBranchDetails;
+    const trx = needsTransaction ? await db.transaction() : undefined;
+
+    try {
+      const conn = trx ?? db;
+
+      // 11. check if category name is provided
+      if (data.categoryName !== undefined) {
+        const categoryName = data.categoryName;
+        const normalizedCategoryName = categoryName.toLowerCase();
+
+        // 12. check if category exists
+        let category = await findProductCategoryByRestaurantIdAndName(
+          product.restaurantId,
+          normalizedCategoryName,
+        );
+
+        // 13. if category does not exist, create it
+        if (!category) {
+          const now = new Date();
+          category = await createProductCategory(
+            {
+              name: categoryName,
+              restaurantId: product.restaurantId,
+              createdAt: now,
+              updatedAt: now,
+            },
+            conn,
+          );
+        }
+        productUpdate.categoryId = category.id;
+      }
+
+      // 14. update product
+      let updatedProduct = product;
+      if (hasProductFields) {
+        const result = await updateProduct(productId, productUpdate, conn);
+        updatedProduct = result ?? updatedProduct;
+      }
+
+      // 15. update branch details if exists
+      let branchDetails: ProductBranchDetails | undefined;
+      if (shouldUpdateBranchDetails) {
+        const result = await updateBranchDetails(
+          productId,
+          branchId!,
+          {
+            price: data.price,
+            stock: data.stock,
+            isAvailable: data.isAvailable,
+          },
+          conn,
+        );
+        branchDetails = result;
+      }
+
+      // 16. commit transaction if exists
+      if (trx) {
+        await trx.commit();
+      }
+
+      // 17. return product and branch details if exists
+      return branchDetails
+        ? { product: updatedProduct, branchDetails }
+        : { product: updatedProduct };
+    } catch (error) {
+      // 18. rollback transaction if exists
+      if (trx) {
+        await trx.rollback();
+      }
+      throw error;
+    }
   };
 }
 

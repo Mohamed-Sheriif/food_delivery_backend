@@ -2,7 +2,14 @@ import { NextFunction, Request, Response } from "express";
 import { productService, ProductService } from "../service/product.service";
 import { validateBody } from "../../../common/validation/validate";
 import { CreateProductCategoryDTO, ProductCategoryParamsDTO } from "../dto/product-category.dto";
-import { BranchProductsParamsDTO, CreateProductDTO, ProductParamsDTO, RestaurantProductsParamsDTO } from "../dto/product.dto";
+import {
+  BranchProductsParamsDTO,
+  CreateProductDTO,
+  ProductParamsDTO,
+  RestaurantProductsParamsDTO,
+  UpdateProductDTO,
+  UpdateProductQueryDTO,
+} from "../dto/product.dto";
 
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
@@ -138,6 +145,41 @@ export class ProductController {
       res.status(200).json({
         message: "Product found successfully",
         data: product,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  update = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. validate req.body
+      const data = await validateBody(UpdateProductDTO, req.body);
+
+      // 2. validate req.params
+      const { id } = await validateBody(ProductParamsDTO, req.params);
+
+      // 3. validate req.query
+      const query = await validateBody(UpdateProductQueryDTO, req.query);
+
+      // 4. call service
+      const result = await this.productService.update(
+        {
+          userId: req.user!.userId,
+          role: req.user!.role,
+        },
+        Number(id),
+        data,
+        query.branchId ? Number(query.branchId) : undefined,
+      );
+
+      // 5. respond
+      res.status(200).json({
+        message: "Product updated successfully",
+        data: {
+          product: result.product,
+          ...(result.branchDetails && { branchDetails: result.branchDetails }),
+        }
       });
     } catch (error) {
       next(error);

@@ -14,3 +14,4 @@ productRouter.get(
   productController.findByRestaurant,
 );
 productRouter.get("/products/:id", productController.findById);
+productRouter.patch("/products/:id", authenticate, productController.update);
