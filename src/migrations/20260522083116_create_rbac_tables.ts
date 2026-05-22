@@ -35,7 +35,7 @@ export async function up(knex: Knex): Promise<void> {
       restaurant_id BIGINT NOT NULL,
       user_id BIGINT NOT NULL,
       role_id SMALLINT NOT NULL,
-      status TEXT NOT NULL CHECK(status IN ('active', 'inactive', 'suspended')) DEFAULT 'active',
+      status TEXT NOT NULL CHECK(status IN ('active', 'inactive', 'suspended')) DEFAULT 'inactive',
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
