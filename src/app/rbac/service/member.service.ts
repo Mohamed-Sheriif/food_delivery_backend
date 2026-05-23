@@ -101,6 +101,7 @@ export class MemberService {
       );
 
       // 5.4. TODO: send email to member
+      console.log(`mocked email sent: ${otp}`);
 
       // 5.5. commit transaction
       await trx.commit();

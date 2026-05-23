@@ -37,6 +37,7 @@ import {
 import { Restaurant } from "../../restaurant/entity/restaurant.entity";
 import { User } from "../../user/entity/user.entity";
 import { db } from "../../../common/knex/knex";
+import { activateMemberByUserId } from "../../rbac/repository/restaurant-member.repo";
 
 export class AuthService {
   constructor(private readonly restaurantService: RestaurantService) {}
@@ -213,6 +214,9 @@ export class AuthService {
 
     // 7. update reset password consumedAt
     await updatePasswordResetConsumedAt(passwordReset.id);
+
+    // 8. return user
+    return user;
   };
 
   refreshToken = async (refreshToken: string) => {
@@ -250,6 +254,17 @@ export class AuthService {
         createdAt: user.createdAt,
       },
     };
+  };
+
+  acceptInvite = async (data: ResetPasswordDTO) => {
+    // 1. find user by email
+    // 2. find password reset by user id
+    // 3. verify otp
+    // 4. update password
+    const user = await this.resetPassword(data);
+
+    // 5. activate user
+    await activateMemberByUserId(user.id);
   };
 }
 
