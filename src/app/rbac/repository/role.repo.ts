@@ -26,11 +26,11 @@ export const findRoleByName = async (
   name: string,
   conn: Knex = db,
 ): Promise<number | undefined> => {
-  const [row] = await conn("roles").select("id").where("name", name).first();
+  const rows = await conn("roles").select("id").where("name", name);
 
-  if (!row) {
+  if (rows.length === 0) {
     return undefined;
   }
 
-  return row.id;
+  return Number(rows[0].id);
 };

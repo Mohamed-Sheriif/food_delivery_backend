@@ -58,7 +58,7 @@ export function requireRestaurantMember(paramName: string = "restaurantId") {
       throw SomethingWentWrongError;
     }
 
-    if (req.user?.restaurantId !== restaurantId) {
+    if (Number(req.user?.restaurantId) !== restaurantId) {
       if (req.user?.role === SystemRole.SYSTEM_ADMIN) {
         return next();
       }

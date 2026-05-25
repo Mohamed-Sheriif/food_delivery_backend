@@ -106,6 +106,15 @@ export async function findBranchById(id: number): Promise<Branch | undefined> {
   return row ? toEntity(row) : undefined;
 }
 
+export async function findBranchesByIds(ids: number[]): Promise<Branch[]> {
+  const rows = await db("restaurants_branches")
+    .select("id", "restaurant_id")
+    .whereIn("id", ids)
+    .whereNull("deleted_at");
+
+  return rows.map(toEntity);
+}
+
 export async function updateBranch(
   id: number,
   branch: Partial<Branch>,

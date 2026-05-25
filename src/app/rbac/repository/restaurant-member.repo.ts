@@ -60,7 +60,7 @@ export async function findRestaurantMemberWithRole(
   roleName: string;
 } | null> {
   const row = await conn("restaurant_members as rm")
-    .select("rm.restaurant_id", "r.name as roleName")
+    .select("rm.restaurant_id", "rm.id", "r.name as roleName")
     .leftJoin("roles as r", "rm.role_id", "r.id")
     .where("rm.user_id", userId)
     .andWhere("rm.status", RestaurantMemberStatus.ACTIVE)
