@@ -1,4 +1,3 @@
-import { AppError } from "../../../common/error/AppError";
 import { db } from "../../../common/knex/knex";
 import { minutesToMilliseconds } from "../../../common/time/time";
 import { UserAlreadyExistsError } from "../../auth/errors";
@@ -17,7 +16,12 @@ import { CreateMemberDto } from "../dto/member.dto";
 import { MemberBranch } from "../entity/member-branch.entity";
 import { RestaurantMember } from "../entity/restaurant-member.entity";
 import { RestaurantMemberStatus } from "../enums";
-import { CannotCreateOwnerMemberError, RoleNotFoundError } from "../errors";
+import {
+  BranchesDoNotBelongToRestaurantError,
+  BranchesNotFoundError,
+  CannotCreateOwnerMemberError,
+  RoleNotFoundError,
+} from "../errors";
 import { setMemberBranches } from "../repository/member-branch.repo";
 import { createRestaurantMember } from "../repository/restaurant-member.repo";
 import { findRoleByName } from "../repository/role.repo";
@@ -26,24 +30,24 @@ export class MemberService {
   createMember = async (restaurantId: number, data: CreateMemberDto) => {
     // 1. don't accept owner role creation
     if (data.role === "owner") {
-      throw CannotCreateOwnerMemberError;
+      throw new CannotCreateOwnerMemberError();
     }
 
     // 2. check if member already exists
     const existing = await findUserExistsByEmailOrPhone(data.email, data.phone);
     if (existing) {
-      throw UserAlreadyExistsError;
+      throw new UserAlreadyExistsError();
     }
     // 3. find roleId by role name
     const roleId = await findRoleByName(data.role);
     if (!roleId) {
-      throw RoleNotFoundError;
+      throw new RoleNotFoundError();
     }
 
     // 4. find restaurant by id
     const restaurant = await findRestaurantById(restaurantId);
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     const now = new Date();
@@ -91,20 +95,16 @@ export class MemberService {
           (id) => !existingIds.includes(id),
         );
         if (missingIds.length > 0) {
-          throw new AppError(
-            `Branch(s) ${missingIds.join(", ")} not found`,
-            404,
-          );
+          throw new BranchesNotFoundError(missingIds);
         }
 
         // 5.3.3. validate branches belong to the restaurant
         const branchesDoesNotBelongToRestaurant = branches.filter(
-          (branch) => branch.restaurantId !== restaurant.id,
+          (branch) => Number(branch.restaurantId) !== Number(restaurant.id),
         );
         if (branchesDoesNotBelongToRestaurant.length > 0) {
-          throw new AppError(
-            `Branch(s) ${branchesDoesNotBelongToRestaurant.map((branch) => branch.id).join(", ")} does not belong to the restaurant`,
-            400,
+          throw new BranchesDoNotBelongToRestaurantError(
+            branchesDoesNotBelongToRestaurant.map((branch) => branch.id),
           );
         }
 

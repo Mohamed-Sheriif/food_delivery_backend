@@ -7,7 +7,7 @@ export class UserService {
     const user = await findUserById(userId);
 
     if (!user) {
-      throw UserNotFoundError;
+      throw new UserNotFoundError();
     }
 
     return {
@@ -26,7 +26,7 @@ export class UserService {
     const updatedUser = await updateUser(userId, user);
 
     if (!updatedUser) {
-      throw UserNotFoundError;
+      throw new UserNotFoundError();
     }
 
     return {

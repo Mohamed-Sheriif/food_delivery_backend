@@ -10,7 +10,7 @@ import { LoginDTO, RegisterDTO, ResetPasswordDTO } from "../dto/auth.dto";
 import { minutesToMilliseconds } from "../../../common/time/time";
 import {
   UserAlreadyExistsError,
-  CannotSignupAsSystemAdmin,
+  CannotSignupAsSystemAdminError,
   IncorrectCredentialsError,
   InvalidOTPError,
   InvalidTokenError,
@@ -54,14 +54,14 @@ export class AuthService {
 
   register = async (data: RegisterDTO) => {
     if (data.role == SystemRole.SYSTEM_ADMIN) {
-      throw CannotSignupAsSystemAdmin;
+      throw new CannotSignupAsSystemAdminError();
     }
     // 1. check if user exists by email
     const existing = await findUserExistsByEmailOrPhone(data.email, data.phone);
 
     // 2. if exists we throw an error
     if (existing) {
-      throw UserAlreadyExistsError;
+      throw new UserAlreadyExistsError();
     }
     // 3. hashPassword
     const hashedPassword = await hashPassword(data.password);
@@ -90,7 +90,7 @@ export class AuthService {
       // 6. check if user is restaurant user, then call restaurant service to create restaurant and create restaurant member
       if (data.role === SystemRole.RESTAURANT_USER) {
         if (data.restaurant === undefined) {
-          throw RestaurantDataRequiredError;
+          throw new RestaurantDataRequiredError();
         }
 
         restaurant = await this.restaurantService.create(
@@ -102,7 +102,7 @@ export class AuthService {
         // 6.1. find role id by name
         const roleId = await findRoleByName("owner");
         if (!roleId) {
-          throw RoleNotFoundError;
+          throw new RoleNotFoundError();
         }
 
         // 6.2. create restaurant member
@@ -164,7 +164,7 @@ export class AuthService {
 
     // 2. if not found throw error
     if (!user) {
-      throw IncorrectCredentialsError;
+      throw new IncorrectCredentialsError();
     }
 
     // 3. compare password
@@ -172,7 +172,7 @@ export class AuthService {
 
     // 4. if not match throw error
     if (!isMatch) {
-      throw IncorrectCredentialsError;
+      throw new IncorrectCredentialsError();
     }
 
     // 5. prepare the payload
@@ -249,7 +249,7 @@ export class AuthService {
 
     // 2. if not found throw error
     if (!user) {
-      throw InvalidOTPError;
+      throw new InvalidOTPError();
     }
 
     // 3. find otp by user id
@@ -257,13 +257,38 @@ export class AuthService {
 
     // 4. if otp not valid throw error
     if (!passwordReset) {
-      throw InvalidOTPError;
+      throw new InvalidOTPError();
     }
 
     // 5. verify otp
     const otpHash = hashOTP(data.otp);
+    // #region agent log
+    fetch("http://127.0.0.1:7398/ingest/2588f2b4-32d2-458c-a417-7de7fbca8337", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "be9467",
+      },
+      body: JSON.stringify({
+        sessionId: "be9467",
+        runId: "accept-invite",
+        hypothesisId: "H4",
+        location: "src/app/auth/service/auth.service.ts:287",
+        message: "OTP comparison computed",
+        data: {
+          userId: user.id,
+          passwordResetId: passwordReset.id,
+          requestOtpHashPrefix: otpHash.slice(0, 12),
+          storedOtpHashPrefix: passwordReset.otpHash.slice(0, 12),
+          hashesMatch: otpHash === passwordReset.otpHash,
+          isExpired: passwordReset.isExpired(),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     if (otpHash !== passwordReset.otpHash || passwordReset.isExpired()) {
-      throw InvalidOTPError;
+      throw new InvalidOTPError();
     }
 
     // 6. hash new password and update
@@ -286,7 +311,7 @@ export class AuthService {
 
     // 3. if not found throw error
     if (!user) {
-      throw InvalidTokenError;
+      throw new InvalidTokenError();
     }
 
     // 4. build the new payload

@@ -6,7 +6,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies.access_token;
 
   if (!token) {
-    throw UserNotAuthenticatedError;
+    throw new UserNotAuthenticatedError();
   }
 
   try {

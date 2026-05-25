@@ -21,7 +21,7 @@ export function rbac(options: RBACOptions) {
 
       // 1. check if req.user exists, if not we will bail
       if (!req.user) {
-        throw UserNotAuthenticatedError;
+        throw new UserNotAuthenticatedError();
       }
 
       // 2. check if system_admim => bypass
@@ -37,13 +37,13 @@ export function rbac(options: RBACOptions) {
         if (
           !permissionCacheService.hasPermission(permissions, resource, action)
         ) {
-          throw UnauthorizedError;
+          throw new UnauthorizedError();
         }
 
         return next();
       }
 
-      throw UnauthorizedError;
+      throw new UnauthorizedError();
     } catch (error) {
       next(error);
     }
@@ -55,7 +55,7 @@ export function requireRestaurantMember(paramName: string = "restaurantId") {
     const restaurantId = parseInt(req.params[paramName] as string);
 
     if (!restaurantId) {
-      throw SomethingWentWrongError;
+      throw new SomethingWentWrongError();
     }
 
     if (Number(req.user?.restaurantId) !== restaurantId) {
@@ -63,7 +63,7 @@ export function requireRestaurantMember(paramName: string = "restaurantId") {
         return next();
       }
 
-      throw UnauthorizedError;
+      throw new UnauthorizedError();
     }
 
     return next();
@@ -75,7 +75,7 @@ export function requireBranchMember(paramName: string = "branchId") {
     const branchId = parseInt(req.params[paramName] as string);
 
     if (!branchId) {
-      throw SomethingWentWrongError;
+      throw new SomethingWentWrongError();
     }
 
     if (!req.user?.branchIds?.includes(branchId)) {
@@ -83,7 +83,7 @@ export function requireBranchMember(paramName: string = "branchId") {
         return next();
       }
 
-      throw UnauthorizedError;
+      throw new UnauthorizedError();
     }
 
     return next();

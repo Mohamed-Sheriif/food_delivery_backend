@@ -25,8 +25,8 @@ import { hashPassword } from "../../auth/utils";
 import { db } from "../../../common/knex/knex";
 import { User } from "../../user/entity/user.entity";
 import {
-  UnauthorizedErrorOnlySystemAdmin,
-  UnauthorizedErrorOnlySystemAdminOrRestaurantOwner,
+  OnlySystemAdminAllowedError,
+  OnlySystemAdminOrRestaurantOwnerAllowedError,
 } from "../../../common/auth/errors";
 
 export class RestaurantService {
@@ -60,7 +60,7 @@ export class RestaurantService {
   ) => {
     // 1. check authenticated user is system admin
     if (authenticatedUserRole !== SystemRole.SYSTEM_ADMIN) {
-      throw UnauthorizedErrorOnlySystemAdmin;
+      throw new OnlySystemAdminAllowedError();
     }
 
     // 2. check if user exists by email
@@ -71,7 +71,7 @@ export class RestaurantService {
 
     // 3. if exists we throw an error
     if (userExists) {
-      throw UserAlreadyExistsError;
+      throw new UserAlreadyExistsError();
     }
 
     // 4. hashPassword
@@ -131,7 +131,7 @@ export class RestaurantService {
     const restaurant = await findRestaurantById(id);
 
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     return restaurant;
@@ -153,12 +153,12 @@ export class RestaurantService {
       authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
       authenticatedUser.userId !== Number(restaurant?.ownerId)
     ) {
-      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+      throw new OnlySystemAdminOrRestaurantOwnerAllowedError();
     }
 
     // 3. check if restaurant exists
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     // 4. update restaurant
@@ -177,12 +177,12 @@ export class RestaurantService {
 
     // 2. check logged in user is system admin
     if (authenticatedUserRole !== SystemRole.SYSTEM_ADMIN) {
-      throw UnauthorizedErrorOnlySystemAdmin;
+      throw new OnlySystemAdminAllowedError();
     }
 
     // 3. check if restaurant ex
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     // 3. update restaurant status

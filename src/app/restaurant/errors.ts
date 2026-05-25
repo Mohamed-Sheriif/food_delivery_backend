@@ -1,6 +1,7 @@
 import { AppError } from "../../common/error/AppError";
 
-export const RestaurantNotFoundError = new AppError(
-  "Restaurant not found",
-  404,
-);
+export class RestaurantNotFoundError extends AppError {
+  constructor() {
+    super("Restaurant not found", 404);
+  }
+}
