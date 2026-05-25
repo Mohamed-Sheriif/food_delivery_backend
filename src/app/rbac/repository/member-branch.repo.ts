@@ -31,3 +31,14 @@ export async function setMemberBranches(
     );
   }
 }
+
+export async function findBranchIdsByMemberId(
+  memberId: number,
+  conn: Knex = db,
+): Promise<number[]> {
+  const rows = await conn("member_branches")
+    .select("branch_id")
+    .where("member_id", memberId);
+
+  return rows.map((row) => Number(row.branch_id));
+}

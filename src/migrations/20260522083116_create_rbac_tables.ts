@@ -25,7 +25,7 @@ export async function up(knex: Knex): Promise<void> {
       permission_id INT NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-      PRIMARY KEY (role_id, permission_id)
+      PRIMARY KEY (role_id, permission_id),
       CONSTRAINT fk_role_permissions_role_id FOREIGN KEY (role_id) REFERENCES roles(id),
       CONSTRAINT fk_role_permissions_permission_id FOREIGN KEY (permission_id) REFERENCES permissions(id)
     );
@@ -39,7 +39,7 @@ export async function up(knex: Knex): Promise<void> {
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-      UNIQUE (restaurant_id, user_id)
+      UNIQUE (restaurant_id, user_id),
       CONSTRAINT fk_restaurant_members_restaurant_id FOREIGN KEY (restaurant_id) REFERENCES restaurants(id),
       CONSTRAINT fk_restaurant_members_user_id FOREIGN KEY (user_id) REFERENCES users(id),
       CONSTRAINT fk_restaurant_members_role_id FOREIGN KEY (role_id) REFERENCES roles(id)
@@ -50,7 +50,7 @@ export async function up(knex: Knex): Promise<void> {
       branch_id BIGINT NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-      PRIMARY KEY (member_id, branch_id)
+      PRIMARY KEY (member_id, branch_id),
       CONSTRAINT fk_member_branches_member_id FOREIGN KEY (member_id) REFERENCES restaurant_members(id),
       CONSTRAINT fk_member_branches_branch_id FOREIGN KEY (branch_id) REFERENCES restaurants_branches(id)
     );

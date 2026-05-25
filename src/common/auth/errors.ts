@@ -14,3 +14,13 @@ export const UnauthorizedErrorOnlySystemAdminOrRestaurantOwner = new AppError(
   "Unauthorized error: Only system admin or restaurant owner allowed to do this action",
   403,
 );
+
+export const UnauthorizedError = new AppError(
+  "Unauthorized error: You do not have permission to do this action",
+  403,
+);
+
+export const SomethingWentWrongError = new AppError(
+  "Something went wrong",
+  500,
+);

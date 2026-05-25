@@ -29,6 +29,7 @@ import {
   generateOTP,
   hashOTP,
   verifyRefreshToken,
+  JwtPayload,
 } from "../utils";
 import {
   RestaurantService,
@@ -37,7 +38,16 @@ import {
 import { Restaurant } from "../../restaurant/entity/restaurant.entity";
 import { User } from "../../user/entity/user.entity";
 import { db } from "../../../common/knex/knex";
-import { activateMemberByUserId } from "../../rbac/repository/restaurant-member.repo";
+import {
+  activateMemberByUserId,
+  createRestaurantMember,
+  findRestaurantMemberWithRole,
+} from "../../rbac/repository/restaurant-member.repo";
+import { findBranchIdsByMemberId } from "../../rbac/repository/member-branch.repo";
+import { RestaurantMember } from "../../rbac/entity/restaurant-member.entity";
+import { findRoleByName } from "../../rbac/repository/role.repo";
+import { RoleNotFoundError } from "../../rbac/errors";
+import { RestaurantMemberStatus } from "../../rbac/enums";
 
 export class AuthService {
   constructor(private readonly restaurantService: RestaurantService) {}
@@ -61,6 +71,7 @@ export class AuthService {
     const trx = await db.transaction();
     let user: User;
     let restaurant: Restaurant | undefined;
+    let restaurantMember: RestaurantMember | undefined;
     try {
       // 5. create user
       user = await createUser(
@@ -76,7 +87,7 @@ export class AuthService {
         trx,
       );
 
-      // 6. check if user is restaurant user, then call restaurant service to create restaurant
+      // 6. check if user is restaurant user, then call restaurant service to create restaurant and create restaurant member
       if (data.role === SystemRole.RESTAURANT_USER) {
         if (data.restaurant === undefined) {
           throw RestaurantDataRequiredError;
@@ -85,6 +96,25 @@ export class AuthService {
         restaurant = await this.restaurantService.create(
           user.id,
           data.restaurant,
+          trx,
+        );
+
+        // 6.1. find role id by name
+        const roleId = await findRoleByName("owner");
+        if (!roleId) {
+          throw RoleNotFoundError;
+        }
+
+        // 6.2. create restaurant member
+        restaurantMember = await createRestaurantMember(
+          {
+            userId: user.id,
+            restaurantId: restaurant.id,
+            roleId: roleId,
+            status: RestaurantMemberStatus.ACTIVE,
+            createdAt: now,
+            updatedAt: now,
+          },
           trx,
         );
       }
@@ -96,12 +126,23 @@ export class AuthService {
       throw error;
     }
 
-    // 8. create access token , refresh token
-    const payload = { userId: user.id, role: data.role, email: user.email };
+    // 8. prepare the payload
+    const payload: JwtPayload = {
+      userId: user.id,
+      role: data.role,
+      email: user.email,
+    };
+    if (restaurantMember) {
+      payload.restaurantId = restaurantMember.restaurantId;
+      payload.restaurantRole = "owner";
+      payload.branchIds = [];
+    }
+
+    // 9. create access token , refresh token
     const accessToken = createAccessToken(payload);
     const refreshToken = createRefreshToken(payload);
 
-    // 9. return tokens and user data
+    // 10. return tokens and user data
     return {
       message: "Successfully registered user",
       accessToken,
@@ -134,16 +175,33 @@ export class AuthService {
       throw IncorrectCredentialsError;
     }
 
-    // 5. create access token , refresh token
+    // 5. prepare the payload
+    // 5.1. find restaurant members by user id if user is restaurant user
+    let restaurantMemberInfo;
+    if (user.systemRole === SystemRole.RESTAURANT_USER) {
+      const restaurantMember = await findRestaurantMemberWithRole(user.id);
+      if (restaurantMember) {
+        restaurantMemberInfo = {
+          restaurantId: restaurantMember.member.restaurantId,
+          restaurantRole: restaurantMember.roleName,
+          branchIds: await findBranchIdsByMemberId(restaurantMember.member.id),
+        };
+      }
+    }
+
+    // 5.2. build the payload
     const payload = {
       userId: user.id,
       role: user.systemRole,
       email: user.email,
+      ...restaurantMemberInfo,
     };
+
+    // 6. create access token , refresh token
     const accessToken = createAccessToken(payload);
     const refreshToken = createRefreshToken(payload);
 
-    // 6. return tokens and user data
+    // 7. return tokens and user data
     return {
       message: "Successfully logged in user",
       accessToken,
