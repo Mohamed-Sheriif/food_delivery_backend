@@ -12,6 +12,7 @@ const MEMBER_COLUMNS = [
   "created_at",
   "updated_at",
 ];
+const MEMBER_COLUMNS_WITH_RM_ALIAS = MEMBER_COLUMNS.map((column) => `rm.${column}`);
 
 function toEntity(row: any): RestaurantMember {
   return new RestaurantMember({
@@ -52,6 +53,18 @@ export async function activateMemberByUserId(
   });
 }
 
+export async function findRestaurantMemberById(
+  memberId: number,
+  conn: Knex = db,
+): Promise<RestaurantMember | null> {
+  const row = await conn("restaurant_members as rm")
+    .select(MEMBER_COLUMNS_WITH_RM_ALIAS)
+    .where("rm.id", memberId)
+    .first();
+
+  return row ? toEntity(row) : null;
+}
+
 export async function findRestaurantMemberWithRole(
   userId: number,
   conn: Knex = db,
@@ -72,4 +85,80 @@ export async function findRestaurantMemberWithRole(
         roleName: row.roleName,
       }
     : null;
+}
+
+export async function findMembersByRestaurantId(
+  restaurantId: number,
+  conn: Knex = db,
+): Promise<RestaurantMember[]> {
+  const rows = await conn("restaurant_members as rm")
+    .select(
+      "rm.id",
+      "rm.user_id as userId",
+      "rm.status",
+      "u.email",
+      "u.name",
+      "u.phone",
+      "r.name as role",
+      "r.display_name as roleDisplayName",
+    )
+    .leftJoin("users as u", "rm.user_id", "u.id")
+    .leftJoin("roles as r", "rm.role_id", "r.id")
+    .where("rm.restaurant_id", restaurantId);
+
+  return rows.map((row) => toEntity(row));
+}
+
+export async function findMemberWithRoleName(
+  memberId: number,
+  conn: Knex = db,
+): Promise<{
+  member: RestaurantMember;
+  roleName: string;
+} | null> {
+  const row = await conn("restaurant_members as rm")
+    .select(MEMBER_COLUMNS_WITH_RM_ALIAS.concat("r.name as roleName"))
+    .leftJoin("roles as r", "rm.role_id", "r.id")
+    .where("rm.id", memberId)
+    .first();
+
+  return row
+    ? {
+        member: toEntity(row),
+        roleName: row.roleName,
+      }
+    : null;
+}
+
+export async function updateMember(
+  memberId: number,
+  data: { status?: RestaurantMemberStatus; roleId?: number },
+  conn: Knex = db,
+): Promise<RestaurantMember | null> {
+  const payload: Record<string, unknown> = {};
+
+  if (data.status !== undefined) payload.status = data.status;
+  if (data.roleId !== undefined) payload.role_id = data.roleId;
+
+  if (Object.keys(payload).length === 0) {
+    return findRestaurantMemberById(memberId, conn);
+  }
+
+  payload.updated_at = new Date();
+
+  const [row] = await conn("restaurant_members")
+    .where("id", memberId)
+    .update(payload)
+    .returning(MEMBER_COLUMNS);
+
+  return row ? toEntity(row) : null;
+}
+export async function deleteRestaurantMember(
+  memberId: number,
+  conn: Knex = db,
+): Promise<void> {
+  await conn.transaction(async (trx) => {
+    await trx("member_branches").where("member_id", memberId).delete();
+    await trx("restaurant_members").where("id", memberId).delete();
+  });
 }

@@ -42,3 +42,17 @@ export async function findBranchIdsByMemberId(
 
   return rows.map((row) => Number(row.branch_id));
 }
+
+export async function countBranchesByIdsAndRestaurant(
+  branchIds: number[],
+  restaurantId: number,
+  conn: Knex = db,
+): Promise<number> {
+  const result = await conn("member_branches")
+    .whereIn("branch_id", branchIds)
+    .where("restaurant_id", restaurantId)
+    .count("* as count")
+    .first();
+
+  return result ? Number(result.count) : 0;
+}

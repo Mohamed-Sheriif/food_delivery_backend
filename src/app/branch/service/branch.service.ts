@@ -140,7 +140,10 @@ export class BranchService {
     }
 
     // 5. check logged in user is system admin
-    if (authenticatedUserRole !== SystemRole.SYSTEM_ADMIN) {
+    if (
+      authenticatedUserRole !== SystemRole.SYSTEM_ADMIN &&
+      authenticatedUserRole !== SystemRole.RESTAURANT_USER
+    ) {
       throw new OnlySystemAdminAllowedError();
     }
 

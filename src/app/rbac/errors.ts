@@ -26,3 +26,20 @@ export class BranchesDoNotBelongToRestaurantError extends AppError {
     );
   }
 }
+export class MemberNotFoundError extends AppError {
+  constructor() {
+    super("Member not found!", 404);
+  }
+}
+
+export class CannotDeleteOwnerMemberError extends AppError {
+  constructor() {
+    super("Cannot delete the restaurant owner!", 400);
+  }
+}
+
+export class OwnerHasAccessToAllBranchesError extends AppError {
+  constructor() {
+    super("Owner has access to all branches!", 400);
+  }
+}

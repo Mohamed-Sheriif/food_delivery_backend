@@ -22,10 +22,10 @@ function toEntity(row: any) {
   });
 }
 
-export const findRoleByName = async (
+export async function findRoleByName(
   name: string,
   conn: Knex = db,
-): Promise<number | undefined> => {
+): Promise<number | undefined> {
   const rows = await conn("roles").select("id").where("name", name);
 
   if (rows.length === 0) {
@@ -33,4 +33,4 @@ export const findRoleByName = async (
   }
 
   return Number(rows[0].id);
-};
+}

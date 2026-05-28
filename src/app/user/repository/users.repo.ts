@@ -127,3 +127,7 @@ export async function updateUser(
 
   return row ? toEntity(row) : undefined;
 }
+
+export async function deleteUser(userId: number): Promise<void> {
+  await db("users").where({ id: userId }).update({ deleted_at: new Date() });
+}

@@ -1,3 +1,4 @@
+import { UnauthorizedError } from "../../../common/auth/errors";
 import { db } from "../../../common/knex/knex";
 import { minutesToMilliseconds } from "../../../common/time/time";
 import { UserAlreadyExistsError } from "../../auth/errors";
@@ -10,9 +11,14 @@ import { User } from "../../user/entity/user.entity";
 import { SystemRole } from "../../user/enums";
 import {
   createUser,
+  deleteUser,
   findUserExistsByEmailOrPhone,
 } from "../../user/repository/users.repo";
-import { CreateMemberDto } from "../dto/member.dto";
+import {
+  CreateMemberDto,
+  UpdateMemberBranchesDto,
+  UpdateMemberDto,
+} from "../dto/member.dto";
 import { MemberBranch } from "../entity/member-branch.entity";
 import { RestaurantMember } from "../entity/restaurant-member.entity";
 import { RestaurantMemberStatus } from "../enums";
@@ -20,10 +26,24 @@ import {
   BranchesDoNotBelongToRestaurantError,
   BranchesNotFoundError,
   CannotCreateOwnerMemberError,
+  CannotDeleteOwnerMemberError,
+  MemberNotFoundError,
+  OwnerHasAccessToAllBranchesError,
   RoleNotFoundError,
 } from "../errors";
-import { setMemberBranches } from "../repository/member-branch.repo";
-import { createRestaurantMember } from "../repository/restaurant-member.repo";
+import {
+  countBranchesByIdsAndRestaurant,
+  setMemberBranches,
+} from "../repository/member-branch.repo";
+import { findPermissionsByRoleName } from "../repository/permission.repo";
+import {
+  createRestaurantMember,
+  deleteRestaurantMember,
+  findMembersByRestaurantId,
+  findMemberWithRoleName,
+  findRestaurantMemberById,
+  updateMember,
+} from "../repository/restaurant-member.repo";
 import { findRoleByName } from "../repository/role.repo";
 
 export class MemberService {
@@ -151,6 +171,165 @@ export class MemberService {
 
     // 7. return
     return;
+  };
+
+  listMembers = async (restaurantId: number) => {
+    // 1. find restaurant by id
+    const restaurant = await findRestaurantById(restaurantId);
+    if (!restaurant) {
+      throw new RestaurantNotFoundError();
+    }
+
+    // 2. find members by restaurant id
+    const members = await findMembersByRestaurantId(restaurantId);
+
+    // 3. return members
+    return members;
+  };
+
+  updateMember = async (
+    restaurantId: number,
+    memberId: number,
+    data: UpdateMemberDto,
+  ) => {
+    // 1. find restaurant by id
+    const restaurant = await findRestaurantById(restaurantId);
+    if (!restaurant) {
+      throw new RestaurantNotFoundError();
+    }
+
+    // 2. find member by id
+    const member = await findRestaurantMemberById(memberId);
+    if (!member) {
+      throw new MemberNotFoundError();
+    }
+
+    // 3. verify member belongs to the restaurant
+    if (Number(member.restaurantId) !== Number(restaurantId)) {
+      throw new UnauthorizedError();
+    }
+
+    // 4. if role exist in data, find role by name
+    let roleId: number | undefined;
+    if (data.role) {
+      roleId = await findRoleByName(data.role);
+      if (!roleId) {
+        throw new RoleNotFoundError();
+      }
+    }
+
+    // 5. update member
+    const updatedMember = await updateMember(memberId, {
+      roleId: roleId ? Number(roleId) : undefined,
+      status: data.status,
+    });
+
+    // 6. return updated member
+    return updatedMember;
+  };
+
+  deleteMember = async (restaurantId: number, memberId: number) => {
+    // 1. find restaurant by id
+    const restaurant = await findRestaurantById(restaurantId);
+    if (!restaurant) {
+      throw new RestaurantNotFoundError();
+    }
+
+    // 2. find member by id
+    const member = await findMemberWithRoleName(memberId);
+    if (!member) {
+      throw new MemberNotFoundError();
+    }
+
+    // 3. verify member belongs to the restaurant
+    if (Number(member.member.restaurantId) !== Number(restaurantId)) {
+      throw new UnauthorizedError();
+    }
+
+    // 4. if member role is owner, throw error
+    if (member.roleName === "owner") {
+      throw new CannotDeleteOwnerMemberError();
+    }
+
+    // 5. delete member
+    await deleteRestaurantMember(memberId);
+
+    // 6. delete member user
+    await deleteUser(member.member.userId);
+
+    // 7. return
+    return;
+  };
+
+  updateMemberBranches = async (
+    restaurantId: number,
+    memberId: number,
+    data: UpdateMemberBranchesDto,
+  ) => {
+    // 1. find restaurant by id
+    const restaurant = await findRestaurantById(restaurantId);
+    if (!restaurant) {
+      throw new RestaurantNotFoundError();
+    }
+
+    // 2. find member by id
+    const member = await findMemberWithRoleName(memberId);
+    if (!member) {
+      throw new MemberNotFoundError();
+    }
+
+    // 3. verify member belongs to the restaurant
+    if (Number(member.member.restaurantId) !== Number(restaurantId)) {
+      throw new UnauthorizedError();
+    }
+
+    // 4. if roleName is owner, owner have access to all branches, reject
+    if (member.roleName === "owner") {
+      throw new OwnerHasAccessToAllBranchesError();
+    }
+
+    // 5. validate branches belong to the restaurant
+    const branchesCountThatBelongToRestaurant =
+      await countBranchesByIdsAndRestaurant(data.branches, restaurantId);
+    if (
+      Number(branchesCountThatBelongToRestaurant) !==
+      Number(data.branches.length)
+    ) {
+      throw new BranchesDoNotBelongToRestaurantError(data.branches);
+    }
+
+    // 6. build member branches object
+    const branchesObj: MemberBranch[] = data.branches.map(
+      (branchId) =>
+        new MemberBranch({
+          memberId: member.member.id,
+          branchId,
+          createdAt: new Date(),
+        }),
+    );
+
+    // 7. set member branches
+    await setMemberBranches(member.member.id, branchesObj);
+
+    // 8. return
+    return;
+  };
+
+  getRolePermissions = async (roleName: string) => {
+    // 1. find role by name
+    const role = await findRoleByName(roleName);
+    if (!role) {
+      throw new RoleNotFoundError();
+    }
+
+    // 2. find role permissions by role id
+    const rolePermissions = await findPermissionsByRoleName(roleName);
+
+    // 3. return role permissions
+    return {
+      roleName,
+      permissions: rolePermissions,
+    };
   };
 }
 

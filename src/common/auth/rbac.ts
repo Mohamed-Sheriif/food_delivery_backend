@@ -58,6 +58,10 @@ export function requireRestaurantMember(paramName: string = "restaurantId") {
       throw new SomethingWentWrongError();
     }
 
+    if (req.user?.role === SystemRole.SYSTEM_ADMIN) {
+      return next();
+    }
+
     if (Number(req.user?.restaurantId) !== restaurantId) {
       if (req.user?.role === SystemRole.SYSTEM_ADMIN) {
         return next();
@@ -76,6 +80,10 @@ export function requireBranchMember(paramName: string = "branchId") {
 
     if (!branchId) {
       throw new SomethingWentWrongError();
+    }
+
+    if (req.user?.role === SystemRole.SYSTEM_ADMIN) {
+      return next();
     }
 
     if (!req.user?.branchIds?.includes(branchId)) {
