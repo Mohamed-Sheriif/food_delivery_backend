@@ -48,11 +48,11 @@ export class CustomerAddressService {
     const address = await findCustomerAddressById(id);
 
     if (!address) {
-      throw CustomerAddressNotFoundError;
+      throw new CustomerAddressNotFoundError();
     }
 
     if (Number(address.userId) != userId) {
-      throw CustomerAddressForbiddenError;
+      throw new CustomerAddressForbiddenError();
     }
 
     return address;
@@ -79,7 +79,7 @@ export class CustomerAddressService {
     });
 
     if (!updatedAddress) {
-      throw CustomerAddressNotFoundError;
+      throw new CustomerAddressNotFoundError();
     }
 
     return updatedAddress;
@@ -94,7 +94,7 @@ export class CustomerAddressService {
     const address = await makeCustomerAddressDefault(userId, id);
 
     if (!address) {
-      throw CustomerAddressNotFoundError;
+      throw new CustomerAddressNotFoundError();
     }
 
     return address;

@@ -1,6 +1,6 @@
 import {
-  UnauthorizedErrorOnlySystemAdmin,
-  UnauthorizedErrorOnlySystemAdminOrRestaurantOwner,
+  OnlySystemAdminAllowedError,
+  OnlySystemAdminOrRestaurantOwnerAllowedError,
 } from "../../../common/auth/errors";
 import { RestaurantNotFoundError } from "../../restaurant/errors";
 import {
@@ -42,7 +42,7 @@ export class BranchService {
       authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
       authenticatedUser.userId !== Number(restaurant?.ownerId)
     ) {
-      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+      throw new OnlySystemAdminOrRestaurantOwnerAllowedError();
     }
 
     // 3. create branch
@@ -88,7 +88,7 @@ export class BranchService {
 
     // 2. throw error if branch not found
     if (!branch) {
-      throw BranchNotFoundError;
+      throw new BranchNotFoundError();
     }
 
     // 4. get restaurant by id
@@ -98,7 +98,7 @@ export class BranchService {
 
     // 4. throw error if restaurant not found
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     // 5. check logged in user is system admin or the owner of the restaurant
@@ -106,7 +106,7 @@ export class BranchService {
       authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
       authenticatedUser.userId !== Number(restaurant?.ownerId)
     ) {
-      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+      throw new OnlySystemAdminOrRestaurantOwnerAllowedError();
     }
 
     // 6. update branch
@@ -126,7 +126,7 @@ export class BranchService {
 
     // 2. throw error if branch not found
     if (!branch) {
-      throw BranchNotFoundError;
+      throw new BranchNotFoundError();
     }
 
     // 3. get restaurant by id
@@ -136,12 +136,15 @@ export class BranchService {
 
     // 4. throw error if restaurant not found
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     // 5. check logged in user is system admin
-    if (authenticatedUserRole !== SystemRole.SYSTEM_ADMIN) {
-      throw UnauthorizedErrorOnlySystemAdmin;
+    if (
+      authenticatedUserRole !== SystemRole.SYSTEM_ADMIN &&
+      authenticatedUserRole !== SystemRole.RESTAURANT_USER
+    ) {
+      throw new OnlySystemAdminAllowedError();
     }
 
     // 6. update branch status

@@ -1,3 +1,7 @@
 import { AppError } from "../../common/error/AppError";
 
-export const BranchNotFoundError = new AppError("Branch not found", 404);
+export class BranchNotFoundError extends AppError {
+  constructor() {
+    super("Branch not found", 404);
+  }
+}

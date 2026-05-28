@@ -1,23 +1,31 @@
 import { AppError } from "../../common/error/AppError";
 
-export const ProductCategoryAlreadyExistsError = new AppError(
-  "Product category with the same name already exists",
-  400,
-);
+export class ProductCategoryAlreadyExistsError extends AppError {
+  constructor() {
+    super("Product category with the same name already exists", 400);
+  }
+}
 
-export const ProductNotFoundError = new AppError("Product not found", 404);
+export class ProductNotFoundError extends AppError {
+  constructor() {
+    super("Product not found", 404);
+  }
+}
 
-export const ProductBranchDetailsNotFoundError = new AppError(
-  "Product branch details not found",
-  404,
-);
+export class ProductBranchDetailsNotFoundError extends AppError {
+  constructor() {
+    super("Product branch details not found", 404);
+  }
+}
 
-export const BranchIdRequiredForBranchFieldsError = new AppError(
-  "branchId is required when updating price, stock, or availability",
-  400,
-);
+export class BranchIdRequiredForBranchFieldsError extends AppError {
+  constructor() {
+    super("branchId is required when updating price, stock, or availability", 400);
+  }
+}
 
-export const BranchNotBelongToProductRestaurantError = new AppError(
-  "Branch does not belong to the product's restaurant",
-  400,
-);
+export class BranchDoesNotBelongToProductRestaurantError extends AppError {
+  constructor() {
+    super("Branch does not belong to the product's restaurant", 400);
+  }
+}

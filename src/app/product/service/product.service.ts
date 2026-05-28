@@ -1,4 +1,4 @@
-import { UnauthorizedErrorOnlySystemAdminOrRestaurantOwner } from "../../../common/auth/errors";
+import { OnlySystemAdminOrRestaurantOwnerAllowedError } from "../../../common/auth/errors";
 import { BranchNotFoundError } from "../../branch/errors";
 import { findBranchById } from "../../branch/repository/branch.repo";
 import { RestaurantNotFoundError } from "../../restaurant/errors";
@@ -10,7 +10,7 @@ import { Product } from "../entity/product.entity";
 import { ProductCategory } from "../entity/product-category.entity";
 import {
   BranchIdRequiredForBranchFieldsError,
-  BranchNotBelongToProductRestaurantError,
+  BranchDoesNotBelongToProductRestaurantError,
   ProductBranchDetailsNotFoundError,
   ProductCategoryAlreadyExistsError,
   ProductNotFoundError,
@@ -48,7 +48,7 @@ export class ProductService {
 
     // 2. throw error if restaurant not found
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     // 3. check logged in user is system admin or the owner of the restaurant
@@ -56,7 +56,7 @@ export class ProductService {
       authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
       authenticatedUser.userId !== Number(restaurant?.ownerId)
     ) {
-      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+      throw new OnlySystemAdminOrRestaurantOwnerAllowedError();
     }
 
     // 4. check if product category already exists (case-insensitive)
@@ -67,7 +67,7 @@ export class ProductService {
       normalizedName,
     );
     if (existingCategory) {
-      throw ProductCategoryAlreadyExistsError;
+      throw new ProductCategoryAlreadyExistsError();
     }
 
     // 5. create product category
@@ -96,7 +96,7 @@ export class ProductService {
 
     // 2. throw error if restaurant not found
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     // 3. check logged in user is system admin or the owner of the restaurant
@@ -104,7 +104,7 @@ export class ProductService {
       authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
       authenticatedUser.userId !== Number(restaurant.ownerId)
     ) {
-      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+      throw new OnlySystemAdminOrRestaurantOwnerAllowedError();
     }
 
     // 4. check if product category exists (case-insensitive), if not create it
@@ -161,7 +161,7 @@ export class ProductService {
 
     // 2. throw error if branch not found
     if (!branch) {
-      throw BranchNotFoundError;
+      throw new BranchNotFoundError();
     }
     
     // 3. get products by branch id
@@ -183,7 +183,7 @@ export class ProductService {
 
     // 2. throw error if restaurant not found
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     // 3. check logged in user is system admin or the owner of the restaurant
@@ -191,7 +191,7 @@ export class ProductService {
       authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
       authenticatedUser.userId !== Number(restaurant.ownerId)
     ) {
-      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+      throw new OnlySystemAdminOrRestaurantOwnerAllowedError();
     }
 
     // 4. get products by restaurant id
@@ -207,7 +207,7 @@ export class ProductService {
 
     // 2. throw error if product not found
     if (!product) {
-      throw ProductNotFoundError;
+      throw new ProductNotFoundError();
     }
 
     // 3. return product
@@ -226,13 +226,13 @@ export class ProductService {
     // 1. get product by id
     const product = await findProductById(productId);
     if (!product) {
-      throw ProductNotFoundError;
+      throw new ProductNotFoundError();
     }
 
     // 2. get restaurant by id
     const restaurant = await this.restaurantService.findById(product.restaurantId);
     if (!restaurant) {
-      throw RestaurantNotFoundError;
+      throw new RestaurantNotFoundError();
     }
 
     // 3. check logged in user is system admin or the owner of the restaurant
@@ -240,7 +240,7 @@ export class ProductService {
       authenticatedUser.role !== SystemRole.SYSTEM_ADMIN &&
       authenticatedUser.userId !== Number(restaurant.ownerId)
     ) {
-      throw UnauthorizedErrorOnlySystemAdminOrRestaurantOwner;
+      throw new OnlySystemAdminOrRestaurantOwnerAllowedError();
     }
 
     // 4. check if branch id is provided if there are branch fields
@@ -249,7 +249,7 @@ export class ProductService {
       data.stock !== undefined ||
       data.isAvailable !== undefined;
     if (hasBranchFields && branchId === undefined) {
-      throw BranchIdRequiredForBranchFieldsError;
+      throw new BranchIdRequiredForBranchFieldsError();
     }
 
     // 5. check if should update branch details
@@ -259,12 +259,12 @@ export class ProductService {
       // 6. get branch by id
       const branch = await findBranchById(branchId);
       if (!branch) {
-        throw BranchNotFoundError;
+        throw new BranchNotFoundError();
       }
 
       // 7. check if branch belongs to the product's restaurant
       if (branch.restaurantId !== product.restaurantId) {
-        throw BranchNotBelongToProductRestaurantError;
+        throw new BranchDoesNotBelongToProductRestaurantError();
       }
 
       // 8. check if product branch details exists
@@ -273,7 +273,7 @@ export class ProductService {
         branchId,
       );
       if (!existingDetails) {
-        throw ProductBranchDetailsNotFoundError;
+        throw new ProductBranchDetailsNotFoundError();
       }
     }
 

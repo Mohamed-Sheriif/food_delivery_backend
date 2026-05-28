@@ -1,6 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 
-import { daysToMilliseconds, hoursToMilliseconds } from "../../../common/time/time";
+import {
+  daysToMilliseconds,
+  hoursToMilliseconds,
+} from "../../../common/time/time";
 import { validateBody } from "../../../common/validation/validate";
 import {
   ForgetPasswordDTO,
@@ -111,6 +114,25 @@ export class AuthController {
 
       // 4. respond
       res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  acceptInvite = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. validate req.body
+      const data = await validateBody(ResetPasswordDTO, req.body);
+
+      // 2. call service
+      await this.authService.acceptInvite(data);
+
+      // 3. respond
+      res
+        .status(200)
+        .json({
+          message: "Invitation accepted successfully, Please login agin.",
+        });
     } catch (error) {
       next(error);
     }

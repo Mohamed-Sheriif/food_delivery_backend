@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { branchController } from "./controller/branch.controller";
 import { authenticate } from "../../common/auth/guard";
+import { rbac, requireRestaurantMember } from "../../common/auth/rbac";
 
 export const branchRouter = Router();
 
@@ -8,6 +9,8 @@ export const branchRouter = Router();
 branchRouter.post(
   "/restaurants/:restaurantId/branches",
   authenticate,
+  requireRestaurantMember("restaurantId"),
+  rbac({ resource: "core:branch", action: "create" }),
   branchController.createBranch,
 );
 
@@ -18,6 +21,8 @@ branchRouter.get("/branches/nearby", branchController.findNearbyBranches);
 branchRouter.patch(
   "/branches/:id",
   authenticate,
+  requireRestaurantMember("restaurantId"),
+  rbac({ resource: "core:branch", action: "update" }),
   branchController.updateBranch,
 );
 
@@ -25,5 +30,7 @@ branchRouter.patch(
 branchRouter.patch(
   "/branches/:id/status",
   authenticate,
+  requireRestaurantMember("restaurantId"),
+  rbac({ resource: "core:branch", action: "update" }),
   branchController.updateBranchStatus,
 );

@@ -1,6 +1,6 @@
 import { validate } from "class-validator";
-import { AppError } from "../error/AppError";
 import { plainToInstance } from "class-transformer";
+import { RequestValidationError } from "./errors";
 
 export async function validateBody<T extends Object>(
   cls: new () => T,
@@ -15,7 +15,7 @@ export async function validateBody<T extends Object>(
 
   if (errors.length > 0) {
     const messages = errors.flatMap((e) => Object.values(e.constraints ?? {}));
-    throw new AppError(messages.join(", '\n'"), 400);
+    throw new RequestValidationError(messages);
   }
 
   return instance;
