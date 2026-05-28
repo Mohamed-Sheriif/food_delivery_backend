@@ -48,89 +48,75 @@ import { RestaurantMember } from "../../rbac/entity/restaurant-member.entity";
 import { findRoleByName } from "../../rbac/repository/role.repo";
 import { RoleNotFoundError } from "../../rbac/errors";
 import { RestaurantMemberStatus } from "../../rbac/enums";
+import { userService, UserService } from "../../user/service/user.service";
+import {
+  memberService,
+  MemberService,
+} from "../../rbac/service/member.service";
 
 export class AuthService {
-  constructor(private readonly restaurantService: RestaurantService) {}
+  constructor(
+    private readonly restaurantService: RestaurantService,
+    private readonly userService: UserService,
+    private readonly memberService: MemberService,
+  ) {}
 
   register = async (data: RegisterDTO) => {
+    // 1. check if user is system admin
     if (data.role == SystemRole.SYSTEM_ADMIN) {
       throw new CannotSignupAsSystemAdminError();
     }
-    // 1. check if user exists by email
-    const existing = await findUserExistsByEmailOrPhone(data.email, data.phone);
 
-    // 2. if exists we throw an error
-    if (existing) {
-      throw new UserAlreadyExistsError();
-    }
-    // 3. hashPassword
-    const hashedPassword = await hashPassword(data.password);
-
-    // 4. start transaction
+    // 2. start transaction
     const now = new Date();
     const trx = await db.transaction();
-    let user: User;
+    let user: Partial<User>;
     let restaurant: Restaurant | undefined;
     let restaurantMember: RestaurantMember | undefined;
     try {
-      // 5. create user
-      user = await createUser(
+      // 3. create user
+      user = await this.userService.createUser(
         {
           email: data.email,
           phone: data.phone,
           name: data.name,
-          passwordHash: hashedPassword,
+          password: data.password,
           systemRole: data.role,
-          createdAt: now,
-          updatedAt: now,
         },
         trx,
       );
 
-      // 6. check if user is restaurant user, then call restaurant service to create restaurant and create restaurant member
+      // 4. check if user is restaurant user, then call restaurant service to create restaurant and create restaurant member
       if (data.role === SystemRole.RESTAURANT_USER) {
         if (data.restaurant === undefined) {
           throw new RestaurantDataRequiredError();
         }
 
         restaurant = await this.restaurantService.create(
-          user.id,
+          user.id!,
           data.restaurant,
           trx,
         );
 
-        // 6.1. find role id by name
-        const roleId = await findRoleByName("owner");
-        if (!roleId) {
-          throw new RoleNotFoundError();
-        }
-
-        // 6.2. create restaurant member
-        restaurantMember = await createRestaurantMember(
-          {
-            userId: user.id,
-            restaurantId: restaurant.id,
-            roleId: roleId,
-            status: RestaurantMemberStatus.ACTIVE,
-            createdAt: now,
-            updatedAt: now,
-          },
+        restaurantMember = await this.memberService.createMemberOwner(
+          restaurant.id,
+          user.id!,
           trx,
         );
       }
 
-      // 7. commit transaction
+      // 5. commit transaction
       await trx.commit();
     } catch (error) {
       await trx.rollback();
       throw error;
     }
 
-    // 8. prepare the payload
+    // 6. prepare the payload
     const payload: JwtPayload = {
-      userId: user.id,
+      userId: user.id!,
       role: data.role,
-      email: user.email,
+      email: user.email!,
     };
     if (restaurantMember) {
       payload.restaurantId = restaurantMember.restaurantId;
@@ -138,11 +124,11 @@ export class AuthService {
       payload.branchIds = [];
     }
 
-    // 9. create access token , refresh token
+    // 7. create access token , refresh token
     const accessToken = createAccessToken(payload);
     const refreshToken = createRefreshToken(payload);
 
-    // 10. return tokens and user data
+    // 8. return tokens and user data
     return {
       message: "Successfully registered user",
       accessToken,
@@ -351,4 +337,8 @@ export class AuthService {
   };
 }
 
-export const authService = new AuthService(restaurantService);
+export const authService = new AuthService(
+  restaurantService,
+  userService,
+  memberService,
+);

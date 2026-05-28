@@ -28,8 +28,10 @@ import {
   OnlySystemAdminAllowedError,
   OnlySystemAdminOrRestaurantOwnerAllowedError,
 } from "../../../common/auth/errors";
+import { userService, UserService } from "../../user/service/user.service";
 
 export class RestaurantService {
+  constructor(private readonly userService: UserService) {}
   create = async (
     userId: number,
     data: RegisterRestaurantDTO,
@@ -63,51 +65,34 @@ export class RestaurantService {
       throw new OnlySystemAdminAllowedError();
     }
 
-    // 2. check if user exists by email
-    const userExists = await findUserExistsByEmailOrPhone(
-      data.owner.email,
-      data.owner.phone,
-    );
-
-    // 3. if exists we throw an error
-    if (userExists) {
-      throw new UserAlreadyExistsError();
-    }
-
-    // 4. hashPassword
-    const hashedPassword = await hashPassword(data.owner.password);
-
-    // 5. start transaction
-    const now = new Date();
+    // 2. start transaction
     const trx = await db.transaction();
-    let user: User;
+    let user: Partial<User>;
     let restaurant: Restaurant;
     try {
-      // 6. create user
-      user = await createUser(
+      // 3. create user
+      user = await this.userService.createUser(
         {
           email: data.owner.email,
           phone: data.owner.phone,
           name: data.owner.name,
-          passwordHash: hashedPassword,
+          password: data.owner.password,
           systemRole: SystemRole.RESTAURANT_USER,
-          createdAt: now,
-          updatedAt: now,
         },
         trx,
       );
 
-      // 7. create restaurant
-      restaurant = await this.create(user.id, data, trx);
+      // 4. create restaurant
+      restaurant = await this.create(user.id!, data, trx);
 
-      // 8. commit transaction
+      // 5. commit transaction
       await trx.commit();
     } catch (error) {
       await trx.rollback();
       throw error;
     }
 
-    // 8. return restaurant
+    // 6. return restaurant
     return {
       message: "Successfully created restaurant with owner",
       restaurant,
@@ -192,4 +177,4 @@ export class RestaurantService {
   };
 }
 
-export const restaurantService = new RestaurantService();
+export const restaurantService = new RestaurantService(userService);

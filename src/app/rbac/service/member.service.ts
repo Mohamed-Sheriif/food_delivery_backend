@@ -1,3 +1,4 @@
+import { Knex } from "knex";
 import { UnauthorizedError } from "../../../common/auth/errors";
 import { db } from "../../../common/knex/knex";
 import { minutesToMilliseconds } from "../../../common/time/time";
@@ -45,26 +46,52 @@ import {
   updateMember,
 } from "../repository/restaurant-member.repo";
 import { findRoleByName } from "../repository/role.repo";
+import { userService, UserService } from "../../user/service/user.service";
 
 export class MemberService {
+  constructor(private readonly userService: UserService) {}
+
+  createMemberOwner = async (
+    restaurantId: number,
+    userId: number,
+    trx: Knex = db,
+  ): Promise<RestaurantMember> => {
+    // 1. find role id by name
+    const roleId = await findRoleByName("owner");
+    if (!roleId) {
+      throw new RoleNotFoundError();
+    }
+
+    // 2. create owner
+    const owner = await createRestaurantMember(
+      {
+        restaurantId: restaurantId,
+        userId,
+        roleId: roleId,
+        status: RestaurantMemberStatus.ACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      trx,
+    );
+
+    // 3. return owner
+    return owner;
+  };
+
   createMember = async (restaurantId: number, data: CreateMemberDto) => {
     // 1. don't accept owner role creation
     if (data.role === "owner") {
       throw new CannotCreateOwnerMemberError();
     }
 
-    // 2. check if member already exists
-    const existing = await findUserExistsByEmailOrPhone(data.email, data.phone);
-    if (existing) {
-      throw new UserAlreadyExistsError();
-    }
-    // 3. find roleId by role name
+    // 2. find roleId by role name
     const roleId = await findRoleByName(data.role);
     if (!roleId) {
       throw new RoleNotFoundError();
     }
 
-    // 4. find restaurant by id
+    // 3. find restaurant by id
     const restaurant = await findRestaurantById(restaurantId);
     if (!restaurant) {
       throw new RestaurantNotFoundError();
@@ -72,25 +99,23 @@ export class MemberService {
 
     const now = new Date();
     const trx = await db.transaction();
-    let user: User;
+    let user: Partial<User>;
     let member: RestaurantMember;
-    // 5. create user, member and assign branches if provided
+    // 4. create user, member and assign branches if provided
     try {
-      // 5.1. create user
-      user = await createUser(
+      // 4.1. create user
+      user = await this.userService.createUser(
         {
           email: data.email,
           phone: data.phone,
           name: data.name,
           systemRole: SystemRole.RESTAURANT_USER,
-          passwordHash: "",
-          createdAt: now,
-          updatedAt: now,
+          password: "",
         },
         trx,
       );
 
-      // 5.2. create member
+      // 4.2. create member
       member = await createRestaurantMember(
         {
           restaurantId: restaurantId,
@@ -103,12 +128,12 @@ export class MemberService {
         trx,
       );
 
-      // 5.3. assign branches if provided
+      // 4.3. assign branches if provided
       if (data.branches) {
-        // 5.3.1. remove duplicates if exists
+        // 4.3.1. remove duplicates if exists
         const uniqueBranches = [...new Set(data.branches)];
 
-        // 5.3.2. find branches by ids
+        // 4.3.2. find branches by ids
         const branches = await findBranchesByIds(uniqueBranches);
         const existingIds = branches.map((branch) => branch.id);
         const missingIds = uniqueBranches.filter(
@@ -118,7 +143,7 @@ export class MemberService {
           throw new BranchesNotFoundError(missingIds);
         }
 
-        // 5.3.3. validate branches belong to the restaurant
+        // 4.3.3. validate branches belong to the restaurant
         const branchesDoesNotBelongToRestaurant = branches.filter(
           (branch) => Number(branch.restaurantId) !== Number(restaurant.id),
         );
@@ -128,7 +153,7 @@ export class MemberService {
           );
         }
 
-        // 5.3.4. build member branches object
+        // 4.3.4. build member branches object
         const branchesObj: MemberBranch[] = data.branches.map(
           (branchId) =>
             new MemberBranch({
@@ -137,18 +162,18 @@ export class MemberService {
               createdAt: now,
             }),
         );
-        // 5.3.5. set member branches
+        // 4.3.5. set member branches
         await setMemberBranches(member.id, branchesObj, trx);
       }
 
-      // 6. generate otp, create password reset record and send email to member
-      // 6.1. generate otp
+      // 5. generate otp, create password reset record and send email to member
+      // 5.1. generate otp
       const otp = generateOTP();
 
-      // 6.2. hash otp
+      // 5.2. hash otp
       const hashedOtp = hashOTP(otp);
 
-      // 6.3. create password reset record
+      // 5.3. create password reset record
       await createPasswordReset(
         {
           userId: user.id,
@@ -159,17 +184,17 @@ export class MemberService {
         trx,
       );
 
-      // 6.4. TODO: send email to member
+      // 5.4. TODO: send email to member
       console.log(`mocked email sent: ${otp}`);
 
-      // 6.5. commit transaction
+      // 5.5. commit transaction
       await trx.commit();
     } catch (error) {
       await trx.rollback();
       throw error;
     }
 
-    // 7. return
+    // 6. return
     return;
   };
 
@@ -333,4 +358,4 @@ export class MemberService {
   };
 }
 
-export const memberService = new MemberService();
+export const memberService = new MemberService(userService);
