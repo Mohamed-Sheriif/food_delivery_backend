@@ -8,7 +8,7 @@ import {
   UpdateMemberDto,
   UpdateMemberParams,
 } from "../dto/member.dto";
-import { validateBody } from "../../../common/validation/validate";
+import { validateBody } from "../../../lib/validation/validate";
 
 export class MemberController {
   constructor(private readonly memberService: MemberService) {}

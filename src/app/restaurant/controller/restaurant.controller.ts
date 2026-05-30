@@ -3,7 +3,7 @@ import {
   RestaurantService,
   restaurantService,
 } from "../service/restaurant.service";
-import { validateBody } from "../../../common/validation/validate";
+import { validateBody } from "../../../lib/validation/validate";
 import {
   CreateRestaurantWithOwnerDTO,
   RestaurantParamsDTO,

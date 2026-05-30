@@ -1,8 +1,11 @@
-import { OnlySystemAdminOrRestaurantOwnerAllowedError } from "../../../common/auth/errors";
+import { OnlySystemAdminOrRestaurantOwnerAllowedError } from "../../../lib/auth/errors";
 import { BranchNotFoundError } from "../../branch/errors";
 import { findBranchById } from "../../branch/repository/branch.repo";
 import { RestaurantNotFoundError } from "../../restaurant/errors";
-import { RestaurantService, restaurantService } from "../../restaurant/service/restaurant.service";
+import {
+  RestaurantService,
+  restaurantService,
+} from "../../restaurant/service/restaurant.service";
 import { SystemRole } from "../../user/enums";
 import { CreateProductCategoryDTO } from "../dto/product-category.dto";
 import { BranchProduct } from "../entity/branch-product.entity";
@@ -15,7 +18,11 @@ import {
   ProductCategoryAlreadyExistsError,
   ProductNotFoundError,
 } from "../errors";
-import { createProductCategory, findAllProductCategoriesByRestaurantId, findProductCategoryByRestaurantIdAndName } from "../repository/product-category.repo";
+import {
+  createProductCategory,
+  findAllProductCategoriesByRestaurantId,
+  findProductCategoryByRestaurantIdAndName,
+} from "../repository/product-category.repo";
 import {
   findProductBranchDetailsByProductAndBranch,
   updateBranchDetails,
@@ -28,9 +35,8 @@ import {
   updateProduct,
 } from "../repository/product.repo";
 import { CreateProductDTO, UpdateProductDTO } from "../dto/product.dto";
-import { db } from "../../../common/knex/knex";
+import { db } from "../../../lib/knex/knex";
 import { ProductBranchDetails } from "../entity/product-branch-details.entity";
-
 
 export class ProductService {
   constructor(private readonly restaurantService: RestaurantService) {}
@@ -112,27 +118,36 @@ export class ProductService {
     const categoryName = data.categoryName;
     const normalizedCategoryName = categoryName.toLowerCase();
     const trx = await db.transaction();
-    let category = await findProductCategoryByRestaurantIdAndName(restaurantId, normalizedCategoryName);
+    let category = await findProductCategoryByRestaurantIdAndName(
+      restaurantId,
+      normalizedCategoryName,
+    );
     try {
       if (!category) {
-        category = await createProductCategory({
-          name: categoryName,
-          restaurantId,
-          createdAt: now,
-          updatedAt: now,
-        }, trx);
+        category = await createProductCategory(
+          {
+            name: categoryName,
+            restaurantId,
+            createdAt: now,
+            updatedAt: now,
+          },
+          trx,
+        );
       }
 
       // 5. create product
-      const newProduct = await createProduct({
-        name: data.name,
-        description: data.description,
-        imageUrl: data.imageUrl,
-        restaurantId,
-        categoryId: category.id,
-        createdAt: now,
-        updatedAt: now,
-      }, trx);
+      const newProduct = await createProduct(
+        {
+          name: data.name,
+          description: data.description,
+          imageUrl: data.imageUrl,
+          restaurantId,
+          categoryId: category.id,
+          createdAt: now,
+          updatedAt: now,
+        },
+        trx,
+      );
 
       // 6. commit transaction
       await trx.commit();
@@ -149,7 +164,8 @@ export class ProductService {
     restaurantId: number,
   ): Promise<ProductCategory[]> => {
     // 1. get product categories by restaurant id
-    const productCategories = await findAllProductCategoriesByRestaurantId(restaurantId);
+    const productCategories =
+      await findAllProductCategoriesByRestaurantId(restaurantId);
 
     // 2. return product categories
     return productCategories;
@@ -163,7 +179,7 @@ export class ProductService {
     if (!branch) {
       throw new BranchNotFoundError();
     }
-    
+
     // 3. get products by branch id
     const products = await findProductsByBranch(branchId);
 
@@ -230,7 +246,9 @@ export class ProductService {
     }
 
     // 2. get restaurant by id
-    const restaurant = await this.restaurantService.findById(product.restaurantId);
+    const restaurant = await this.restaurantService.findById(
+      product.restaurantId,
+    );
     if (!restaurant) {
       throw new RestaurantNotFoundError();
     }
@@ -279,7 +297,8 @@ export class ProductService {
 
     const productUpdate: Partial<Product> = {};
     if (data.name !== undefined) productUpdate.name = data.name;
-    if (data.description !== undefined) productUpdate.description = data.description;
+    if (data.description !== undefined)
+      productUpdate.description = data.description;
     if (data.imageUrl !== undefined) productUpdate.imageUrl = data.imageUrl;
 
     // 9. check if there are product fields

@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { productService, ProductService } from "../service/product.service";
-import { validateBody } from "../../../common/validation/validate";
-import { CreateProductCategoryDTO, ProductCategoryParamsDTO } from "../dto/product-category.dto";
+import { validateBody } from "../../../lib/validation/validate";
+import {
+  CreateProductCategoryDTO,
+  ProductCategoryParamsDTO,
+} from "../dto/product-category.dto";
 import {
   BranchProductsParamsDTO,
   CreateProductDTO,
@@ -14,13 +17,20 @@ import {
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
-  createProductCategory = async (req: Request, res: Response, next: NextFunction) => {
+  createProductCategory = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       // 1. validate req.body
       const data = await validateBody(CreateProductCategoryDTO, req.body);
 
       // 2. validate req.params
-      const { restaurantId } = await validateBody(ProductCategoryParamsDTO, req.params);
+      const { restaurantId } = await validateBody(
+        ProductCategoryParamsDTO,
+        req.params,
+      );
 
       // 3. call service
       const productCategory = await this.productService.createProductCategory(
@@ -40,7 +50,7 @@ export class ProductController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   createProduct = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -48,7 +58,10 @@ export class ProductController {
       const data = await validateBody(CreateProductDTO, req.body);
 
       // 2. validate req.params
-      const { restaurantId } = await validateBody(RestaurantProductsParamsDTO, req.params);
+      const { restaurantId } = await validateBody(
+        RestaurantProductsParamsDTO,
+        req.params,
+      );
 
       // 3. call service
       const product = await this.productService.createProduct(
@@ -68,15 +81,25 @@ export class ProductController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  findAllProductCategoriesByRestaurantId = async (req: Request, res: Response, next: NextFunction) => {
+  findAllProductCategoriesByRestaurantId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       // 1. validate req.params
-      const { restaurantId } = await validateBody(ProductCategoryParamsDTO, req.params);
+      const { restaurantId } = await validateBody(
+        ProductCategoryParamsDTO,
+        req.params,
+      );
 
       // 2. call service
-      const productCategories = await this.productService.findAllProductCategoriesByRestaurantId(Number(restaurantId));
+      const productCategories =
+        await this.productService.findAllProductCategoriesByRestaurantId(
+          Number(restaurantId),
+        );
 
       // 3. respond
       res.status(200).json({
@@ -91,7 +114,10 @@ export class ProductController {
   findByBranch = async (req: Request, res: Response, next: NextFunction) => {
     try {
       // 1. validate req.params
-      const { branchId } = await validateBody(BranchProductsParamsDTO, req.params);
+      const { branchId } = await validateBody(
+        BranchProductsParamsDTO,
+        req.params,
+      );
 
       // 2. call service
       const products = await this.productService.findByBranch(Number(branchId));
@@ -106,7 +132,11 @@ export class ProductController {
     }
   };
 
-  findByRestaurant = async (req: Request, res: Response, next: NextFunction) => {
+  findByRestaurant = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       // 1. validate req.params
       const { restaurantId } = await validateBody(
@@ -179,7 +209,7 @@ export class ProductController {
         data: {
           product: result.product,
           ...(result.branchDetails && { branchDetails: result.branchDetails }),
-        }
+        },
       });
     } catch (error) {
       next(error);

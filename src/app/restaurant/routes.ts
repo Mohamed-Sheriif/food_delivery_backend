@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { restaurantController } from "./controller/restaurant.controller";
-import { authenticate } from "../../common/auth/guard";
-import { rbac, requireRestaurantMember } from "../../common/auth/rbac";
+import { authenticate } from "../../lib/auth/guard";
+import { rbac, requireRestaurantMember } from "../../lib/auth/rbac";
 
 export const restaurantRouter = Router();
 

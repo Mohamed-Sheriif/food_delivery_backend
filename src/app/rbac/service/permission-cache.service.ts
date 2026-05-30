@@ -1,4 +1,4 @@
-import { minutesToMilliseconds } from "../../../common/time/time";
+import { minutesToMilliseconds } from "../../../pkg/utils/time";
 import { findPermissionsByRoleName } from "../repository/permission.repo";
 
 class PermissionCahceService {

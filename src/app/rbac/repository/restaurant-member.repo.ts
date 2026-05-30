@@ -1,6 +1,6 @@
 import { Knex } from "knex";
 import { RestaurantMember } from "../entity/restaurant-member.entity";
-import { db } from "../../../common/knex/knex";
+import { db } from "../../../lib/knex/knex";
 import { RestaurantMemberStatus } from "../enums";
 
 const MEMBER_COLUMNS = [
@@ -12,7 +12,9 @@ const MEMBER_COLUMNS = [
   "created_at",
   "updated_at",
 ];
-const MEMBER_COLUMNS_WITH_RM_ALIAS = MEMBER_COLUMNS.map((column) => `rm.${column}`);
+const MEMBER_COLUMNS_WITH_RM_ALIAS = MEMBER_COLUMNS.map(
+  (column) => `rm.${column}`,
+);
 
 function toEntity(row: any): RestaurantMember {
   return new RestaurantMember({

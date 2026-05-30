@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import { db } from "../../../common/knex/knex";
+import { db } from "../../../lib/knex/knex";
 import { ProductCategory } from "../entity/product-category.entity";
 
 const PRODUCT_CATEGORY_COLUMNS = [
@@ -23,7 +23,7 @@ function toEntity(row: any) {
 
 export async function createProductCategory(
   productCategory: Partial<ProductCategory>,
-  conn: Knex= db
+  conn: Knex = db,
 ): Promise<ProductCategory> {
   const [row] = await conn("product_categories")
     .insert({
@@ -38,12 +38,12 @@ export async function createProductCategory(
 }
 
 export async function findAllProductCategoriesByRestaurantId(
-  restaurantId: number
+  restaurantId: number,
 ): Promise<ProductCategory[]> {
   const rows = await db("product_categories")
     .select(PRODUCT_CATEGORY_COLUMNS)
     .where("restaurant_id", restaurantId)
-    .whereNull("deleted_at")
+    .whereNull("deleted_at");
 
   return rows.map(toEntity);
 }

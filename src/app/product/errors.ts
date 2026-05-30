@@ -1,4 +1,4 @@
-import { AppError } from "../../common/error/AppError";
+import { AppError } from "../../lib/error/AppError";
 
 export class ProductCategoryAlreadyExistsError extends AppError {
   constructor() {
@@ -20,7 +20,10 @@ export class ProductBranchDetailsNotFoundError extends AppError {
 
 export class BranchIdRequiredForBranchFieldsError extends AppError {
   constructor() {
-    super("branchId is required when updating price, stock, or availability", 400);
+    super(
+      "branchId is required when updating price, stock, or availability",
+      400,
+    );
   }
 }
 

@@ -2,8 +2,8 @@ import express from "express";
 import cookieParser from "cookie-parser";
 
 import { routes } from "./routes";
-import { correlationId } from "./common/correlation/correlationId";
-import { errorHandler } from "./common/error/errorHandler";
+import { correlationId } from "./lib/correlation/correlationId";
+import { errorHandler } from "./lib/error/errorHandler";
 
 // localhost:3000/api/
 export function createApp() {

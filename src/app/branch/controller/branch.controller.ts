@@ -8,7 +8,7 @@ import {
   UpdateBranchParamsDTO,
   UpdateBranchStatusDTO,
 } from "../dto/branch.dto";
-import { validateBody } from "../../../common/validation/validate";
+import { validateBody } from "../../../lib/validation/validate";
 
 export class BranchController {
   constructor(private readonly branchService: BranchService) {}

@@ -1,7 +1,7 @@
 import { Knex } from "knex";
-import { UnauthorizedError } from "../../../common/auth/errors";
-import { db } from "../../../common/knex/knex";
-import { minutesToMilliseconds } from "../../../common/time/time";
+import { UnauthorizedError } from "../../../lib/auth/errors";
+import { db } from "../../../lib/knex/knex";
+import { minutesToMilliseconds } from "../../../pkg/utils/time";
 import { UserAlreadyExistsError } from "../../auth/errors";
 import { createPasswordReset } from "../../auth/repository/password-reset-repo";
 import { generateOTP, hashOTP } from "../../auth/utils";

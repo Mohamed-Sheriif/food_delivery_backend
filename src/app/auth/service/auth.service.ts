@@ -7,7 +7,7 @@ import {
   findUserById,
 } from "../../user/repository/users.repo";
 import { LoginDTO, RegisterDTO, ResetPasswordDTO } from "../dto/auth.dto";
-import { minutesToMilliseconds } from "../../../common/time/time";
+import { minutesToMilliseconds } from "../../../pkg/utils/time";
 import {
   UserAlreadyExistsError,
   CannotSignupAsSystemAdminError,
@@ -37,7 +37,7 @@ import {
 } from "../../restaurant/service/restaurant.service";
 import { Restaurant } from "../../restaurant/entity/restaurant.entity";
 import { User } from "../../user/entity/user.entity";
-import { db } from "../../../common/knex/knex";
+import { db } from "../../../lib/knex/knex";
 import {
   activateMemberByUserId,
   createRestaurantMember,

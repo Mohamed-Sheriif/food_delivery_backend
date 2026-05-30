@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import { db } from "../../../common/knex/knex";
+import { db } from "../../../lib/knex/knex";
 import { BranchProduct } from "../entity/branch-product.entity";
 import { Product } from "../entity/product.entity";
 
@@ -65,18 +65,18 @@ function toBranchProductEntity(row: {
 
 export async function createProduct(
   product: Partial<Product>,
-  conn: Knex= db
+  conn: Knex = db,
 ): Promise<Product> {
   const [row] = await conn("products")
     .insert({
-        name: product.name,
-        description: product.description,
-        image_url: product.imageUrl,
-        restaurant_id: product.restaurantId,
-        category_id: product.categoryId,
-        created_at: product.createdAt,
-        updated_at: product.updatedAt,
-      })
+      name: product.name,
+      description: product.description,
+      image_url: product.imageUrl,
+      restaurant_id: product.restaurantId,
+      category_id: product.categoryId,
+      created_at: product.createdAt,
+      updated_at: product.updatedAt,
+    })
     .returning(PRODUCT_COLUMNS);
 
   return toProductEntity(row);
@@ -143,7 +143,8 @@ export async function updateProduct(
   if (product.description !== undefined)
     payload.description = product.description;
   if (product.imageUrl !== undefined) payload.image_url = product.imageUrl;
-  if (product.categoryId !== undefined) payload.category_id = product.categoryId;
+  if (product.categoryId !== undefined)
+    payload.category_id = product.categoryId;
 
   if (Object.keys(payload).length === 0) {
     return findProductById(id, conn);

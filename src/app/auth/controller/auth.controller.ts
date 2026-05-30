@@ -3,8 +3,8 @@ import { NextFunction, Request, Response } from "express";
 import {
   daysToMilliseconds,
   hoursToMilliseconds,
-} from "../../../common/time/time";
-import { validateBody } from "../../../common/validation/validate";
+} from "../../../pkg/utils/time";
+import { validateBody } from "../../../lib/validation/validate";
 import {
   ForgetPasswordDTO,
   LoginDTO,
@@ -128,11 +128,9 @@ export class AuthController {
       await this.authService.acceptInvite(data);
 
       // 3. respond
-      res
-        .status(200)
-        .json({
-          message: "Invitation accepted successfully, Please login agin.",
-        });
+      res.status(200).json({
+        message: "Invitation accepted successfully, Please login agin.",
+      });
     } catch (error) {
       next(error);
     }

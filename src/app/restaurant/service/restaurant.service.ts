@@ -22,12 +22,12 @@ import {
 } from "../../user/repository/users.repo";
 import { UserAlreadyExistsError } from "../../auth/errors";
 import { hashPassword } from "../../auth/utils";
-import { db } from "../../../common/knex/knex";
+import { db } from "../../../lib/knex/knex";
 import { User } from "../../user/entity/user.entity";
 import {
   OnlySystemAdminAllowedError,
   OnlySystemAdminOrRestaurantOwnerAllowedError,
-} from "../../../common/auth/errors";
+} from "../../../lib/auth/errors";
 import { userService, UserService } from "../../user/service/user.service";
 
 export class RestaurantService {

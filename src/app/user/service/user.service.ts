@@ -10,7 +10,7 @@ import {
   findUserExistsByEmailOrPhone,
   updateUser,
 } from "../repository/users.repo";
-import { db } from "../../../common/knex/knex";
+import { db } from "../../../lib/knex/knex";
 
 export interface CreateUserDto {
   email: string;

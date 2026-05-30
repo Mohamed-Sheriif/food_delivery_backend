@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import { db } from "../../../common/knex/knex";
+import { db } from "../../../lib/knex/knex";
 import { ProductBranchDetails } from "../entity/product-branch-details.entity";
 
 const PRODUCT_BRANCH_DETAILS_COLUMNS = [
@@ -65,7 +65,11 @@ export async function updateBranchDetails(
     payload.is_available = details.isAvailable;
 
   if (Object.keys(payload).length === 0) {
-    return findProductBranchDetailsByProductAndBranch(productId, branchId, conn);
+    return findProductBranchDetailsByProductAndBranch(
+      productId,
+      branchId,
+      conn,
+    );
   }
 
   payload.updated_at = new Date();

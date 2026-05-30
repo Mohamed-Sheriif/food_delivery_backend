@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { productController } from "./controller/product.controller";
-import { authenticate } from "../../common/auth/guard";
+import { authenticate } from "../../lib/auth/guard";
 import {
   rbac,
   requireBranchMember,
   requireRestaurantMember,
-} from "../../common/auth/rbac";
+} from "../../lib/auth/rbac";
 
 export const productRouter = Router();
 

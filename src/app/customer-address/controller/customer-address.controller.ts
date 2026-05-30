@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { validateBody } from "../../../common/validation/validate";
+import { validateBody } from "../../../lib/validation/validate";
 import {
   CustomerAddressParamsDTO,
   CreateCustomerAddressDTO,

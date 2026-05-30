@@ -1,7 +1,7 @@
 import {
   OnlySystemAdminAllowedError,
   OnlySystemAdminOrRestaurantOwnerAllowedError,
-} from "../../../common/auth/errors";
+} from "../../../lib/auth/errors";
 import { RestaurantNotFoundError } from "../../restaurant/errors";
 import {
   restaurantService,
