@@ -2,7 +2,6 @@ import { Knex } from "knex";
 import { UnauthorizedError } from "../../../lib/auth/errors";
 import { db } from "../../../lib/knex/knex";
 import { minutesToMilliseconds } from "../../../pkg/utils/time";
-import { UserAlreadyExistsError } from "../../auth/errors";
 import { createPasswordReset } from "../../auth/repository/password-reset-repo";
 import { generateOTP, hashOTP } from "../../auth/utils";
 import { findBranchesByIds } from "../../branch/repository/branch.repo";
@@ -10,11 +9,7 @@ import { RestaurantNotFoundError } from "../../restaurant/errors";
 import { findRestaurantById } from "../../restaurant/repository/restaurant.repo";
 import { User } from "../../user/entity/user.entity";
 import { SystemRole } from "../../user/enums";
-import {
-  createUser,
-  deleteUser,
-  findUserExistsByEmailOrPhone,
-} from "../../user/repository/users.repo";
+import { deleteUser } from "../../user/repository/users.repo";
 import {
   CreateMemberDto,
   UpdateMemberBranchesDto,
@@ -46,10 +41,16 @@ import {
   updateMember,
 } from "../repository/restaurant-member.repo";
 import { findRoleByName } from "../repository/role.repo";
-import { userService, UserService } from "../../user/service/user.service";
+import { UserService } from "../../user/service/user.service";
+import { inject, injectable } from "tsyringe";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class MemberService {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    @inject(TOKENS.UserService)
+    private readonly userService: UserService,
+  ) {}
 
   createMemberOwner = async (
     restaurantId: number,
@@ -357,5 +358,3 @@ export class MemberService {
     };
   };
 }
-
-export const memberService = new MemberService(userService);

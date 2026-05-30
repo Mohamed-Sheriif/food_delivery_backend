@@ -1,7 +1,10 @@
+import { injectable } from "tsyringe";
+
 import { minutesToMilliseconds } from "../../../pkg/utils/time";
 import { findPermissionsByRoleName } from "../repository/permission.repo";
 
-class PermissionCahceService {
+@injectable()
+export class PermissionCacheService {
   private cache: Map<string, { permissions: string[]; cachedAt: number }> =
     new Map();
   private readonly TTL = minutesToMilliseconds(60);
@@ -28,5 +31,3 @@ class PermissionCahceService {
     return permissions.includes(`${resource}:${action}`);
   }
 }
-
-export const permissionCacheService = new PermissionCahceService();

@@ -1,9 +1,15 @@
 import { Router } from "express";
-import { restaurantController } from "./controller/restaurant.controller";
+import { RestaurantController } from "./controller/restaurant.controller";
 import { authenticate } from "../../lib/auth/guard";
 import { rbac, requireRestaurantMember } from "../../lib/auth/rbac";
+import { container } from "../../lib/di/container";
+import { TOKENS } from "../../lib/di/tokens";
 
 export const restaurantRouter = Router();
+
+const restaurantController = container.resolve<RestaurantController>(
+  TOKENS.RestaurantController,
+);
 
 restaurantRouter.post("/", authenticate, restaurantController.createWithOwner);
 restaurantRouter.get("/", restaurantController.findAll);

@@ -1,17 +1,19 @@
+import { inject, injectable } from "tsyringe";
 import { NextFunction, Request, Response } from "express";
+
 import { validateBody } from "../../../lib/validation/validate";
 import {
   CustomerAddressParamsDTO,
   CreateCustomerAddressDTO,
   UpdateCustomerAddressDTO,
 } from "../dto/customer-address.dto";
-import {
-  customerAddressService,
-  CustomerAddressService,
-} from "../service/customer-address.service";
+import { CustomerAddressService } from "../service/customer-address.service";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class CustomerAddressController {
   constructor(
+    @inject(TOKENS.CustomerAddressService)
     private readonly customerAddressService: CustomerAddressService,
   ) {}
 
@@ -133,7 +135,3 @@ export class CustomerAddressController {
     }
   };
 }
-
-export const customerAddressController = new CustomerAddressController(
-  customerAddressService,
-);

@@ -1,5 +1,7 @@
+import { inject, injectable } from "tsyringe";
 import { NextFunction, Request, Response } from "express";
-import { MemberService, memberService } from "../service/member.service";
+
+import { MemberService } from "../service/member.service";
 import {
   CreateMemberDto,
   CreateMemberParams,
@@ -9,9 +11,13 @@ import {
   UpdateMemberParams,
 } from "../dto/member.dto";
 import { validateBody } from "../../../lib/validation/validate";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class MemberController {
-  constructor(private readonly memberService: MemberService) {}
+  constructor(
+    @inject(TOKENS.MemberService) private readonly memberService: MemberService,
+  ) {}
 
   createMember = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -168,5 +174,3 @@ export class MemberController {
     }
   };
 }
-
-export const memberController = new MemberController(memberService);

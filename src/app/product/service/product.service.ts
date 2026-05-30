@@ -1,11 +1,10 @@
+import { inject, injectable } from "tsyringe";
+
 import { OnlySystemAdminOrRestaurantOwnerAllowedError } from "../../../lib/auth/errors";
 import { BranchNotFoundError } from "../../branch/errors";
 import { findBranchById } from "../../branch/repository/branch.repo";
 import { RestaurantNotFoundError } from "../../restaurant/errors";
-import {
-  RestaurantService,
-  restaurantService,
-} from "../../restaurant/service/restaurant.service";
+import { RestaurantService } from "../../restaurant/service/restaurant.service";
 import { SystemRole } from "../../user/enums";
 import { CreateProductCategoryDTO } from "../dto/product-category.dto";
 import { BranchProduct } from "../entity/branch-product.entity";
@@ -37,9 +36,14 @@ import {
 import { CreateProductDTO, UpdateProductDTO } from "../dto/product.dto";
 import { db } from "../../../lib/knex/knex";
 import { ProductBranchDetails } from "../entity/product-branch-details.entity";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class ProductService {
-  constructor(private readonly restaurantService: RestaurantService) {}
+  constructor(
+    @inject(TOKENS.RestaurantService)
+    private readonly restaurantService: RestaurantService,
+  ) {}
 
   createProductCategory = async (
     authenticatedUser: {
@@ -383,5 +387,3 @@ export class ProductService {
     }
   };
 }
-
-export const productService = new ProductService(restaurantService);

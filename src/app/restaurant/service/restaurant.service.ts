@@ -1,3 +1,4 @@
+import { inject, injectable } from "tsyringe";
 import { Knex } from "knex";
 import { RegisterRestaurantDTO } from "../../auth/dto/auth.dto";
 import { Restaurant } from "../entity/restaurant.entity";
@@ -16,22 +17,22 @@ import {
   UpdateRestaurantStatusDTO,
 } from "../dto/restaurant.dto";
 import { SystemRole } from "../../user/enums";
-import {
-  createUser,
-  findUserExistsByEmailOrPhone,
-} from "../../user/repository/users.repo";
-import { UserAlreadyExistsError } from "../../auth/errors";
-import { hashPassword } from "../../auth/utils";
 import { db } from "../../../lib/knex/knex";
 import { User } from "../../user/entity/user.entity";
 import {
   OnlySystemAdminAllowedError,
   OnlySystemAdminOrRestaurantOwnerAllowedError,
 } from "../../../lib/auth/errors";
-import { userService, UserService } from "../../user/service/user.service";
+import { UserService } from "../../user/service/user.service";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class RestaurantService {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    @inject(TOKENS.UserService)
+    private readonly userService: UserService,
+  ) {}
+
   create = async (
     userId: number,
     data: RegisterRestaurantDTO,
@@ -176,5 +177,3 @@ export class RestaurantService {
     return updatedRestaurant!;
   };
 }
-
-export const restaurantService = new RestaurantService(userService);

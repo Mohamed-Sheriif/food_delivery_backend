@@ -1,8 +1,7 @@
+import { inject, injectable } from "tsyringe";
 import { Request, Response, NextFunction } from "express";
-import {
-  RestaurantService,
-  restaurantService,
-} from "../service/restaurant.service";
+
+import { RestaurantService } from "../service/restaurant.service";
 import { validateBody } from "../../../lib/validation/validate";
 import {
   CreateRestaurantWithOwnerDTO,
@@ -10,9 +9,14 @@ import {
   UpdateRestauranDTO,
   UpdateRestaurantStatusDTO,
 } from "../dto/restaurant.dto";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class RestaurantController {
-  constructor(private restaurantService: RestaurantService) {}
+  constructor(
+    @inject(TOKENS.RestaurantService)
+    private readonly restaurantService: RestaurantService,
+  ) {}
 
   createWithOwner = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -118,5 +122,3 @@ export class RestaurantController {
     }
   };
 }
-
-export const restaurantController = new RestaurantController(restaurantService);

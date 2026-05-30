@@ -1,13 +1,19 @@
 import { Router } from "express";
-import { productController } from "./controller/product.controller";
+import { ProductController } from "./controller/product.controller";
 import { authenticate } from "../../lib/auth/guard";
 import {
   rbac,
   requireBranchMember,
   requireRestaurantMember,
 } from "../../lib/auth/rbac";
+import { container } from "../../lib/di/container";
+import { TOKENS } from "../../lib/di/tokens";
 
 export const productRouter = Router();
+
+const productController = container.resolve<ProductController>(
+  TOKENS.ProductController,
+);
 
 productRouter.post(
   "/restaurants/:restaurantId/products",

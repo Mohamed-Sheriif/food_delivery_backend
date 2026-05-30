@@ -11,10 +11,16 @@ import {
   RegisterDTO,
   ResetPasswordDTO,
 } from "../dto/auth.dto";
-import { AuthService, authService } from "../service/auth.service";
+import { AuthService } from "../service/auth.service";
+import { inject, injectable } from "tsyringe";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    @inject(TOKENS.AuthService)
+    private readonly authService: AuthService,
+  ) {}
 
   private setAuthCookies(
     res: Response,
@@ -136,5 +142,3 @@ export class AuthController {
     }
   };
 }
-
-export const authController = new AuthController(authService);

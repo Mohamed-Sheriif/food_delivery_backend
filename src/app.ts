@@ -3,7 +3,10 @@ import cookieParser from "cookie-parser";
 
 import { routes } from "./routes";
 import { correlationId } from "./lib/correlation/correlationId";
-import { errorHandler } from "./lib/error/errorHandler";
+import { createErrorHandler } from "./lib/error/errorHandler";
+import { container } from "./lib/di/container";
+import { TOKENS } from "./lib/di/tokens";
+import type { Logger } from "./lib/logger/logger";
 
 // localhost:3000/api/
 export function createApp() {
@@ -18,6 +21,6 @@ export function createApp() {
   app.use("/api", routes);
 
   // error handler
-  app.use(errorHandler);
+  app.use(createErrorHandler(container.resolve<Logger>(TOKENS.Logger)));
   return app;
 }

@@ -5,7 +5,9 @@ import {
   UserNotAuthenticatedError,
 } from "./errors";
 import { SystemRole } from "../../app/user/enums";
-import { permissionCacheService } from "../../app/rbac/service/permission-cache.service";
+import { container } from "../di/container";
+import { TOKENS } from "../di/tokens";
+import { PermissionCacheService } from "../../app/rbac/service/permission-cache.service";
 
 export interface RBACOptions {
   resource: string;
@@ -31,11 +33,13 @@ export function rbac(options: RBACOptions) {
 
       // 3. if restaurant_user, check if they have the permission to do the action
       if (req.user.role === SystemRole.RESTAURANT_USER) {
-        const permissions = await permissionCacheService.getPermissions(
-          req.user.restaurantRole!,
-        );
+        const permissions = await container
+          .resolve<PermissionCacheService>(TOKENS.PermissionCacheService)
+          .getPermissions(req.user.restaurantRole!);
         if (
-          !permissionCacheService.hasPermission(permissions, resource, action)
+          !container
+            .resolve<PermissionCacheService>(TOKENS.PermissionCacheService)
+            .hasPermission(permissions, resource, action)
         ) {
           throw new UnauthorizedError();
         }

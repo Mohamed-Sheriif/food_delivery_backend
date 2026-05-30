@@ -1,10 +1,16 @@
+import { inject, injectable } from "tsyringe";
 import { NextFunction, Request, Response } from "express";
-import { userService, UserService } from "../service/user.service";
+
+import { UserService } from "../service/user.service";
 import { UpdateUserDTO } from "../dto/user.dto";
 import { validateBody } from "../../../lib/validation/validate";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class UserController {
-  constructor(private userService: UserService) {}
+  constructor(
+    @inject(TOKENS.UserService) private readonly userService: UserService,
+  ) {}
 
   getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -36,5 +42,3 @@ export class UserController {
     }
   };
 }
-
-export const userController = new UserController(userService);

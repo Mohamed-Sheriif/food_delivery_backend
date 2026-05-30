@@ -1,9 +1,15 @@
 import { Router } from "express";
-import { branchController } from "./controller/branch.controller";
 import { authenticate } from "../../lib/auth/guard";
 import { rbac, requireRestaurantMember } from "../../lib/auth/rbac";
+import { container } from "../../lib/di/container";
+import { TOKENS } from "../../lib/di/tokens";
+import { BranchController } from "./controller/branch.controller";
 
 export const branchRouter = Router();
+
+const branchController = container.resolve<BranchController>(
+  TOKENS.BranchController,
+);
 
 // create branch
 branchRouter.post(

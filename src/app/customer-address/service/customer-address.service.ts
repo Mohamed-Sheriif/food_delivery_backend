@@ -1,3 +1,5 @@
+import { injectable } from "tsyringe";
+
 import {
   CreateCustomerAddressDTO,
   UpdateCustomerAddressDTO,
@@ -17,6 +19,7 @@ import {
   updateCustomerAddress,
 } from "../repository/customer-address.repo";
 
+@injectable()
 export class CustomerAddressService {
   create = async (
     userId: number,
@@ -105,5 +108,3 @@ export class CustomerAddressService {
     await deleteCustomerAddress(userId, id, address.isDefault);
   };
 }
-
-export const customerAddressService = new CustomerAddressService();

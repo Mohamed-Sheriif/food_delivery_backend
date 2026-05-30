@@ -1,12 +1,12 @@
+import { inject, injectable } from "tsyringe";
+
 import {
   OnlySystemAdminAllowedError,
   OnlySystemAdminOrRestaurantOwnerAllowedError,
 } from "../../../lib/auth/errors";
+import { TOKENS } from "../../../lib/di/tokens";
 import { RestaurantNotFoundError } from "../../restaurant/errors";
-import {
-  restaurantService,
-  RestaurantService,
-} from "../../restaurant/service/restaurant.service";
+import { RestaurantService } from "../../restaurant/service/restaurant.service";
 import { SystemRole } from "../../user/enums";
 import {
   CreateBranchDTO,
@@ -23,8 +23,12 @@ import {
   updateBranchStatus,
 } from "../repository/branch.repo";
 
+@injectable()
 export class BranchService {
-  constructor(private readonly restaurantService: RestaurantService) {}
+  constructor(
+    @inject(TOKENS.RestaurantService)
+    private readonly restaurantService: RestaurantService,
+  ) {}
 
   createBranch = async (
     authenticatedUser: {
@@ -154,5 +158,3 @@ export class BranchService {
     return updatedBranch!;
   };
 }
-
-export const branchService = new BranchService(restaurantService);

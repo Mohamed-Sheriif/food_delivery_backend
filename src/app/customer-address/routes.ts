@@ -1,8 +1,14 @@
 import { Router } from "express";
 import { authenticate } from "../../lib/auth/guard";
-import { customerAddressController } from "./controller/customer-address.controller";
+import { CustomerAddressController } from "./controller/customer-address.controller";
+import { TOKENS } from "../../lib/di/tokens";
+import { container } from "../../lib/di/container";
 
 export const customerAddressRouter = Router();
+
+const customerAddressController = container.resolve<CustomerAddressController>(
+  TOKENS.CustomerAddressController,
+);
 
 customerAddressRouter.get("/", authenticate, customerAddressController.list);
 customerAddressRouter.get(

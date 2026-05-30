@@ -1,5 +1,7 @@
+import { inject, injectable } from "tsyringe";
+
 import { NextFunction, Request, Response } from "express";
-import { productService, ProductService } from "../service/product.service";
+import { ProductService } from "../service/product.service";
 import { validateBody } from "../../../lib/validation/validate";
 import {
   CreateProductCategoryDTO,
@@ -13,9 +15,14 @@ import {
   UpdateProductDTO,
   UpdateProductQueryDTO,
 } from "../dto/product.dto";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    @inject(TOKENS.ProductService)
+    private readonly productService: ProductService,
+  ) {}
 
   createProductCategory = async (
     req: Request,
@@ -216,5 +223,3 @@ export class ProductController {
     }
   };
 }
-
-export const productController = new ProductController(productService);

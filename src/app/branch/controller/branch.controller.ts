@@ -1,5 +1,7 @@
+import { inject, injectable } from "tsyringe";
 import { NextFunction, Request, Response } from "express";
-import { branchService, BranchService } from "../service/branch.service";
+
+import { BranchService } from "../service/branch.service";
 import {
   BranchParamsDTO,
   CreateBranchDTO,
@@ -9,9 +11,14 @@ import {
   UpdateBranchStatusDTO,
 } from "../dto/branch.dto";
 import { validateBody } from "../../../lib/validation/validate";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class BranchController {
-  constructor(private readonly branchService: BranchService) {}
+  constructor(
+    @inject(TOKENS.BranchService)
+    private readonly branchService: BranchService,
+  ) {}
 
   createBranch = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -123,5 +130,3 @@ export class BranchController {
     }
   };
 }
-
-export const branchController = new BranchController(branchService);

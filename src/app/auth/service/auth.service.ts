@@ -1,15 +1,12 @@
 import { SystemRole } from "../../user/enums";
 import {
   findUserByEmail,
-  findUserExistsByEmailOrPhone,
-  createUser,
   updateUserPassword,
   findUserById,
 } from "../../user/repository/users.repo";
 import { LoginDTO, RegisterDTO, ResetPasswordDTO } from "../dto/auth.dto";
 import { minutesToMilliseconds } from "../../../pkg/utils/time";
 import {
-  UserAlreadyExistsError,
   CannotSignupAsSystemAdminError,
   IncorrectCredentialsError,
   InvalidOTPError,
@@ -31,33 +28,29 @@ import {
   verifyRefreshToken,
   JwtPayload,
 } from "../utils";
-import {
-  RestaurantService,
-  restaurantService,
-} from "../../restaurant/service/restaurant.service";
+import { RestaurantService } from "../../restaurant/service/restaurant.service";
 import { Restaurant } from "../../restaurant/entity/restaurant.entity";
 import { User } from "../../user/entity/user.entity";
 import { db } from "../../../lib/knex/knex";
 import {
   activateMemberByUserId,
-  createRestaurantMember,
   findRestaurantMemberWithRole,
 } from "../../rbac/repository/restaurant-member.repo";
 import { findBranchIdsByMemberId } from "../../rbac/repository/member-branch.repo";
 import { RestaurantMember } from "../../rbac/entity/restaurant-member.entity";
-import { findRoleByName } from "../../rbac/repository/role.repo";
-import { RoleNotFoundError } from "../../rbac/errors";
-import { RestaurantMemberStatus } from "../../rbac/enums";
-import { userService, UserService } from "../../user/service/user.service";
-import {
-  memberService,
-  MemberService,
-} from "../../rbac/service/member.service";
+import { UserService } from "../../user/service/user.service";
+import { MemberService } from "../../rbac/service/member.service";
+import { inject, injectable } from "tsyringe";
+import { TOKENS } from "../../../lib/di/tokens";
 
+@injectable()
 export class AuthService {
   constructor(
+    @inject(TOKENS.RestaurantService)
     private readonly restaurantService: RestaurantService,
+    @inject(TOKENS.UserService)
     private readonly userService: UserService,
+    @inject(TOKENS.MemberService)
     private readonly memberService: MemberService,
   ) {}
 
@@ -336,9 +329,3 @@ export class AuthService {
     await activateMemberByUserId(user.id);
   };
 }
-
-export const authService = new AuthService(
-  restaurantService,
-  userService,
-  memberService,
-);
