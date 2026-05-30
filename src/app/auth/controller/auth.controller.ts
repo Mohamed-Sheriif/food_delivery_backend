@@ -14,6 +14,7 @@ import {
 import { AuthService } from "../service/auth.service";
 import { inject, injectable } from "tsyringe";
 import { TOKENS } from "../../../lib/di/tokens";
+import { sendSuccess } from "../../../lib/http/response";
 
 @injectable()
 export class AuthController {
@@ -51,7 +52,7 @@ export class AuthController {
       this.setAuthCookies(res, result);
 
       // 4. respond
-      res.status(201).json(result);
+      sendSuccess(res, result, 201);
     } catch (err) {
       next(err);
     }
@@ -69,7 +70,7 @@ export class AuthController {
       this.setAuthCookies(res, result);
 
       // 4. respond
-      res.status(200).json(result);
+      sendSuccess(res, result);
     } catch (err) {
       next(err);
     }
@@ -84,7 +85,7 @@ export class AuthController {
       await this.authService.forgetPassword(data.email);
 
       // 3. respond
-      res.status(200).json({ message: "Email sent." });
+      sendSuccess(res, { message: "Email sent." });
     } catch (error) {
       next(error);
     }
@@ -99,9 +100,9 @@ export class AuthController {
       await this.authService.resetPassword(data);
 
       // 3. respond
-      res
-        .status(200)
-        .json({ message: "Password reset successful, Please login agin." });
+      sendSuccess(res, {
+        message: "Password reset successful, Please login agin.",
+      });
     } catch (error) {
       next(error);
     }
@@ -119,7 +120,7 @@ export class AuthController {
       this.setAuthCookies(res, result);
 
       // 4. respond
-      res.status(200).json(result);
+      sendSuccess(res, result);
     } catch (error) {
       next(error);
     }
@@ -134,7 +135,7 @@ export class AuthController {
       await this.authService.acceptInvite(data);
 
       // 3. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Invitation accepted successfully, Please login agin.",
       });
     } catch (error) {

@@ -5,6 +5,7 @@ import { UserService } from "../service/user.service";
 import { UpdateUserDTO } from "../dto/user.dto";
 import { validateBody } from "../../../lib/validation/validate";
 import { TOKENS } from "../../../lib/di/tokens";
+import { sendSuccess } from "../../../lib/http/response";
 
 @injectable()
 export class UserController {
@@ -18,7 +19,7 @@ export class UserController {
       const user = await this.userService.getByUserId(req.user?.userId!);
 
       // 2. respond with the user data
-      res.status(200).json(user);
+      sendSuccess(res, user);
     } catch (error) {
       next(error);
     }
@@ -33,7 +34,7 @@ export class UserController {
       const user = await this.userService.updateUser(req.user?.userId!, data);
 
       // 3. respond with the updated user data
-      res.status(200).json({
+      sendSuccess(res, {
         message: "User updated successfully",
         user,
       });

@@ -9,6 +9,7 @@ import {
 } from "../dto/customer-address.dto";
 import { CustomerAddressService } from "../service/customer-address.service";
 import { TOKENS } from "../../../lib/di/tokens";
+import { sendSuccess } from "../../../lib/http/response";
 
 @injectable()
 export class CustomerAddressController {
@@ -29,10 +30,10 @@ export class CustomerAddressController {
       );
 
       // 3. respond with the created customer address
-      res.status(201).json({
+      sendSuccess(res, {
         message: "Address Added Successfully",
         address,
-      });
+      }, 201);
     } catch (error) {
       next(error);
     }
@@ -46,9 +47,7 @@ export class CustomerAddressController {
       );
 
       // 2. respond with the customer addresses
-      res.status(200).json({
-        data: addresses,
-      });
+      sendSuccess(res, { data: addresses });
     } catch (error) {
       next(error);
     }
@@ -66,7 +65,7 @@ export class CustomerAddressController {
       );
 
       // 3. respond with the customer address
-      res.status(200).json(address);
+      sendSuccess(res, address);
     } catch (error) {
       next(error);
     }
@@ -88,7 +87,7 @@ export class CustomerAddressController {
       );
 
       // 4. respond with the updated customer address
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Address Updated Successfully",
         address,
       });
@@ -109,7 +108,7 @@ export class CustomerAddressController {
       );
 
       // 3. respond with the updated customer address
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Address Made Default Successfully",
         address,
       });
@@ -127,7 +126,7 @@ export class CustomerAddressController {
       await this.customerAddressService.delete(req.user?.userId!, Number(id));
 
       // 3. respond with no content
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Address Deleted Successfully",
       });
     } catch (error) {

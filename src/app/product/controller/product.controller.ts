@@ -16,6 +16,7 @@ import {
   UpdateProductQueryDTO,
 } from "../dto/product.dto";
 import { TOKENS } from "../../../lib/di/tokens";
+import { sendSuccess } from "../../../lib/http/response";
 
 @injectable()
 export class ProductController {
@@ -50,10 +51,10 @@ export class ProductController {
       );
 
       // 4. respond
-      res.status(201).json({
+      sendSuccess(res, {
         message: "Product category created successfully",
         data: productCategory,
-      });
+      }, 201);
     } catch (error) {
       next(error);
     }
@@ -81,10 +82,10 @@ export class ProductController {
       );
 
       // 4. respond
-      res.status(201).json({
+      sendSuccess(res, {
         message: "Product created successfully",
         data: product,
-      });
+      }, 201);
     } catch (error) {
       next(error);
     }
@@ -109,7 +110,7 @@ export class ProductController {
         );
 
       // 3. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Product categories found successfully",
         data: productCategories,
       });
@@ -130,7 +131,7 @@ export class ProductController {
       const products = await this.productService.findByBranch(Number(branchId));
 
       // 3. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Products found successfully",
         data: products,
       });
@@ -161,7 +162,7 @@ export class ProductController {
       );
 
       // 3. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Products found successfully",
         data: products,
       });
@@ -179,7 +180,7 @@ export class ProductController {
       const product = await this.productService.findById(Number(id));
 
       // 3. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Product found successfully",
         data: product,
       });
@@ -211,7 +212,7 @@ export class ProductController {
       );
 
       // 5. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Product updated successfully",
         data: {
           product: result.product,

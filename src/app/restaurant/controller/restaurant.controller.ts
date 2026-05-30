@@ -10,6 +10,7 @@ import {
   UpdateRestaurantStatusDTO,
 } from "../dto/restaurant.dto";
 import { TOKENS } from "../../../lib/di/tokens";
+import { sendSuccess } from "../../../lib/http/response";
 
 @injectable()
 export class RestaurantController {
@@ -30,7 +31,7 @@ export class RestaurantController {
       );
 
       // 3. respond with the result
-      res.status(201).json(result);
+      sendSuccess(res, result, 201);
     } catch (error) {
       next(error);
     }
@@ -42,7 +43,7 @@ export class RestaurantController {
       const restaurants = await this.restaurantService.findAll();
 
       // 2. respond with the restaurants data
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Restaurants retrieved successfully",
         data: restaurants,
       });
@@ -60,7 +61,7 @@ export class RestaurantController {
       const restaurant = await this.restaurantService.findById(Number(id));
 
       // 3. respond with the restaurant data
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Restaurant found successfully",
         restaurant,
       });
@@ -88,7 +89,7 @@ export class RestaurantController {
       );
 
       // 4. respond with the restaurant data
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Restaurant updated successfully",
         restaurant,
       });
@@ -113,7 +114,7 @@ export class RestaurantController {
       );
 
       // 4. respond with the restaurant data
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Restaurant status updated successfully",
         restaurant,
       });

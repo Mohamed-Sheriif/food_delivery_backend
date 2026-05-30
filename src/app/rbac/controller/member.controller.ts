@@ -12,6 +12,7 @@ import {
 } from "../dto/member.dto";
 import { validateBody } from "../../../lib/validation/validate";
 import { TOKENS } from "../../../lib/di/tokens";
+import { sendSuccess } from "../../../lib/http/response";
 
 @injectable()
 export class MemberController {
@@ -34,10 +35,10 @@ export class MemberController {
       await this.memberService.createMember(Number(restaurantId), data);
 
       // 3. respond
-      res.status(201).json({
+      sendSuccess(res, {
         message:
           "Member created successfully. Please check your email for the OTP.",
-      });
+      }, 201);
     } catch (error) {
       next(error);
     }
@@ -57,7 +58,7 @@ export class MemberController {
       );
 
       // 3. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Members retrieved successfully",
         members,
       });
@@ -85,7 +86,7 @@ export class MemberController {
       );
 
       // 4. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Member updated successfully",
         member: updatedMember,
       });
@@ -109,7 +110,7 @@ export class MemberController {
       );
 
       // 3. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Member deleted successfully",
       });
     } catch (error) {
@@ -140,7 +141,7 @@ export class MemberController {
       );
 
       // 4. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Member branches updated successfully",
       });
     } catch (error) {
@@ -165,7 +166,7 @@ export class MemberController {
         await this.memberService.getRolePermissions(roleName);
 
       // 3. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Role permissions retrieved successfully",
         rolePermissions,
       });

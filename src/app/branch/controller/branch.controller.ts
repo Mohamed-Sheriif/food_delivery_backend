@@ -12,6 +12,7 @@ import {
 } from "../dto/branch.dto";
 import { validateBody } from "../../../lib/validation/validate";
 import { TOKENS } from "../../../lib/di/tokens";
+import { sendSuccess } from "../../../lib/http/response";
 
 @injectable()
 export class BranchController {
@@ -39,10 +40,10 @@ export class BranchController {
       );
 
       // 4. respond
-      res.status(201).json({
+      sendSuccess(res, {
         message: "Branch created successfully",
         data: branch,
-      });
+      }, 201);
     } catch (error) {
       next(error);
     }
@@ -64,7 +65,7 @@ export class BranchController {
       );
 
       // 3. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Nearby branches found successfully",
         data: branches,
       });
@@ -92,7 +93,7 @@ export class BranchController {
       );
 
       // 4. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Branch updated successfully",
         data: branch,
       });
@@ -121,7 +122,7 @@ export class BranchController {
       );
 
       // 4. respond
-      res.status(200).json({
+      sendSuccess(res, {
         message: "Branch status updated successfully",
         data: branch,
       });
