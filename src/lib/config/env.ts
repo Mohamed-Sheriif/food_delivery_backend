@@ -20,6 +20,9 @@ const schema = z.object({
   ACCESS_EXPIRES_IN: z.string(),
   REFRESH_EXPIRES_IN: z.string(),
   CORS_ORIGINS: z.string().default("http://localhost:8080"),
+  REDIS_HOST: z.string().default("localhost"),
+  REDIS_PORT: z.string().default("6379"),
+  REDIS_PASSWORD: z.string(),
 });
 
 const parsed = schema.parse(process.env);
@@ -49,6 +52,9 @@ export const env = {
   cors: {
     origins: parsed.CORS_ORIGINS.split(","),
   },
-  // redis
-  // payment
+  redis: {
+    host: parsed.REDIS_HOST,
+    port: Number(parsed.REDIS_PORT),
+    password: parsed.REDIS_PASSWORD,
+  },
 };
