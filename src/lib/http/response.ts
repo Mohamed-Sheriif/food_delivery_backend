@@ -1,15 +1,10 @@
 import { Response } from "express";
+import { PaginationMeta } from "./pagination/cursor-pagination";
 
 export interface ApiResponse<T = unknown, M = Record<string, unknown>> {
   success: boolean;
   data?: T;
   meta?: M;
-}
-
-export interface PaginationMeta {
-  nextCursor: number | null;
-  hasMore: boolean;
-  count: number;
 }
 
 export function sendSuccess<T, M = Record<string, unknown>>(

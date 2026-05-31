@@ -32,6 +32,7 @@ export function withCache(ttl = 3600, userScoped = false) {
           cacheProvider.set(key, JSON.stringify(body), ttl);
         }
         res.setHeader("X-Cache", "MISS");
+
         return originalJson(body);
       };
 
