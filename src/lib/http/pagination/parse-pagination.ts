@@ -2,11 +2,16 @@ import { FilterParams, PaginationParams } from "./cursor-pagination";
 
 export function parsePaginationQuery(
   query: Record<string, any>,
+  allowedSortByFields: string[],
 ): PaginationParams {
+  const sortBy = allowedSortByFields.includes(query.sortBy as string)
+    ? (query.sortBy as string)
+    : allowedSortByFields[0];
+
   return {
     cursor: query.cursor as string,
-    limit: Math.min(1000, query.limit),
-    sortBy: query.sortBy as string,
+    limit: Math.min(1000, Number(query.limit ?? 1000)),
+    sortBy,
     sortOrder: query.sortOrder === "desc" ? "desc" : "asc",
   };
 }

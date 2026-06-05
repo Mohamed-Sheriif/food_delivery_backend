@@ -2,6 +2,12 @@ import { Knex } from "knex";
 import { db } from "../../../lib/knex/knex";
 import { BranchProduct } from "../entity/branch-product.entity";
 import { Product } from "../entity/product.entity";
+import {
+  applyCursorPagination,
+  applyFilters,
+  FilterParams,
+  PaginationParams,
+} from "../../../lib/http/pagination/cursor-pagination";
 
 const PRODUCT_COLUMNS = [
   "id",
@@ -84,8 +90,11 @@ export async function createProduct(
 
 export async function findProductsByBranch(
   branchId: number,
+  filters: FilterParams[],
+  pagination: PaginationParams,
 ): Promise<BranchProduct[]> {
-  const rows = await db("products as p")
+  // start with the base query
+  let query = db("products as p")
     .select(
       "p.id",
       "p.name",
@@ -105,16 +114,45 @@ export async function findProductsByBranch(
     .whereNull("pbd.deleted_at")
     .whereNull("pc.deleted_at");
 
+  // apply filters if any
+  if (filters.length > 0) {
+    query = applyFilters(query, filters);
+  }
+
+  // apply pagination if any
+  if (pagination !== undefined) {
+    query = applyCursorPagination(query, pagination);
+  }
+
+  // execute query and return the result
+  const rows = await query;
+
   return rows.map(toBranchProductEntity);
 }
 
 export async function findProductsByRestaurant(
   restaurantId: number,
+  filters: FilterParams[],
+  pagination: PaginationParams,
 ): Promise<Product[]> {
-  const rows = await db("products")
+  // start with the base query
+  let query = db("products")
     .select(PRODUCT_COLUMNS)
     .where("restaurant_id", restaurantId)
     .whereNull("deleted_at");
+
+  // apply filters if any
+  if (filters.length > 0) {
+    query = applyFilters(query, filters);
+  }
+
+  // apply pagination if any
+  if (pagination !== undefined) {
+    query = applyCursorPagination(query, pagination);
+  }
+
+  // execute query and return the result
+  const rows = await query;
 
   return rows.map(toProductEntity);
 }

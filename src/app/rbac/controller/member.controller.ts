@@ -12,7 +12,11 @@ import {
 } from "../dto/member.dto";
 import { validateBody } from "../../../lib/validation/validate";
 import { TOKENS } from "../../../lib/di/tokens";
-import { sendSuccess } from "../../../lib/http/response";
+import { sendPaginated, sendSuccess } from "../../../lib/http/response";
+import {
+  parseFilters,
+  parsePaginationQuery,
+} from "../../../lib/http/pagination/parse-pagination";
 
 @injectable()
 export class MemberController {
@@ -35,10 +39,14 @@ export class MemberController {
       await this.memberService.createMember(Number(restaurantId), data);
 
       // 3. respond
-      sendSuccess(res, {
-        message:
-          "Member created successfully. Please check your email for the OTP.",
-      }, 201);
+      sendSuccess(
+        res,
+        {
+          message:
+            "Member created successfully. Please check your email for the OTP.",
+        },
+        201,
+      );
     } catch (error) {
       next(error);
     }
@@ -52,16 +60,33 @@ export class MemberController {
         req.params,
       );
 
+      // 2. parse pagination and filters query
+      const pagination = parsePaginationQuery(req.query, ["created_at", "id"]);
+      const filters = parseFilters(req.query, [
+        "id",
+        "status",
+        "email",
+        "name",
+        "phone",
+        "role",
+      ]);
+
       // 2. call service
       const members = await this.memberService.listMembers(
         Number(restaurantId),
+        filters,
+        pagination,
       );
 
       // 3. respond
-      sendSuccess(res, {
-        message: "Members retrieved successfully",
-        members,
-      });
+      sendPaginated(
+        res,
+        {
+          message: "Members retrieved successfully",
+          data: members.data,
+        },
+        members.meta,
+      );
     } catch (error) {
       next(error);
     }

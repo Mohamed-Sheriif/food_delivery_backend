@@ -15,7 +15,7 @@ export function sendSuccess<T, M = Record<string, unknown>>(
 ) {
   const body: ApiResponse<T, M> = {
     success: true,
-    data,
+    ...data,
   };
 
   if (meta !== undefined) body.meta = meta;
@@ -25,7 +25,7 @@ export function sendSuccess<T, M = Record<string, unknown>>(
 
 export function sendPaginated<T>(
   res: Response,
-  data: T[],
+  data: { message: string; data: T[] },
   meta: PaginationMeta,
 ) {
   sendSuccess(res, data, 200, meta);

@@ -44,6 +44,12 @@ import { findRoleByName } from "../repository/role.repo";
 import { UserService } from "../../user/service/user.service";
 import { inject, injectable } from "tsyringe";
 import { TOKENS } from "../../../lib/di/tokens";
+import {
+  buildPaginationResult,
+  FilterParams,
+  PaginationMeta,
+  PaginationParams,
+} from "../../../lib/http/pagination/cursor-pagination";
 
 @injectable()
 export class MemberService {
@@ -199,7 +205,11 @@ export class MemberService {
     return;
   };
 
-  listMembers = async (restaurantId: number) => {
+  listMembers = async (
+    restaurantId: number,
+    filters: FilterParams[],
+    pagination: PaginationParams,
+  ): Promise<{ data: RestaurantMember[]; meta: PaginationMeta }> => {
     // 1. find restaurant by id
     const restaurant = await findRestaurantById(restaurantId);
     if (!restaurant) {
@@ -207,10 +217,14 @@ export class MemberService {
     }
 
     // 2. find members by restaurant id
-    const members = await findMembersByRestaurantId(restaurantId);
+    const members = await findMembersByRestaurantId(
+      restaurantId,
+      filters,
+      pagination,
+    );
 
     // 3. return members
-    return members;
+    return buildPaginationResult(members, pagination.limit, pagination.sortBy);
   };
 
   updateMember = async (

@@ -1,4 +1,5 @@
 import { Knex } from "knex";
+import { snakeToCamel } from "../../../pkg/utils/string";
 
 export interface PaginationParams {
   cursor?: string;
@@ -34,12 +35,24 @@ export function applyCursorPagination<T>(
   query: Knex.QueryBuilder,
   params: PaginationParams,
 ): Knex.QueryBuilder {
+  if (!params.sortBy) return query;
+
   if (params.cursor) {
-    const op = params.sortOrder === "asc" ? ">" : "<";
+    const op = params.sortOrder === "desc" ? "<" : ">";
     query.where(params.sortBy, op, params.cursor);
   }
 
-  return query.orderBy(params.sortBy, params.sortOrder).limit(params.limit);
+  return query.orderBy(params.sortBy, params.sortOrder).limit(params.limit + 1);
+}
+
+function getCursorValue(
+  item: Record<string, unknown>,
+  sortBy: string,
+): string | null {
+  const value = item[sortBy] ?? item[snakeToCamel(sortBy)];
+  if (value == null) return null;
+  if (value instanceof Date) return value.toISOString();
+  return String(value);
 }
 
 export function applyFilters(
@@ -102,9 +115,9 @@ export function buildPaginationResult<T>(
   const data: T[] = hasMore ? rows.slice(0, limit) : rows;
   let nextCursor: string | null = null;
 
-  if (data.length > 0) {
-    const lastItem = data[data.length - 1] as any;
-    nextCursor = hasMore && lastItem ? String(lastItem[sortBy]) : null;
+  if (hasMore && data.length > 0) {
+    const lastItem = data[data.length - 1] as Record<string, unknown>;
+    nextCursor = getCursorValue(lastItem, sortBy);
   }
 
   return {

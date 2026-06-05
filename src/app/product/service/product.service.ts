@@ -37,6 +37,12 @@ import { CreateProductDTO, UpdateProductDTO } from "../dto/product.dto";
 import { db } from "../../../lib/knex/knex";
 import { ProductBranchDetails } from "../entity/product-branch-details.entity";
 import { TOKENS } from "../../../lib/di/tokens";
+import {
+  buildPaginationResult,
+  FilterParams,
+  PaginationMeta,
+  PaginationParams,
+} from "../../../lib/http/pagination/cursor-pagination";
 
 @injectable()
 export class ProductService {
@@ -175,7 +181,11 @@ export class ProductService {
     return productCategories;
   };
 
-  findByBranch = async (branchId: number): Promise<BranchProduct[]> => {
+  findByBranch = async (
+    branchId: number,
+    filters: FilterParams[],
+    pagination: PaginationParams,
+  ): Promise<{ data: BranchProduct[]; meta: PaginationMeta }> => {
     // 1. get branch by id
     const branch = await findBranchById(branchId);
 
@@ -185,10 +195,10 @@ export class ProductService {
     }
 
     // 3. get products by branch id
-    const products = await findProductsByBranch(branchId);
+    const products = await findProductsByBranch(branchId, filters, pagination);
 
     // 4. return products
-    return products;
+    return buildPaginationResult(products, pagination.limit, pagination.sortBy);
   };
 
   findByRestaurant = async (
@@ -197,7 +207,9 @@ export class ProductService {
       role: string;
     },
     restaurantId: number,
-  ): Promise<Product[]> => {
+    filters: FilterParams[],
+    pagination: PaginationParams,
+  ): Promise<{ data: Product[]; meta: PaginationMeta }> => {
     // 1. get restaurant by id
     const restaurant = await this.restaurantService.findById(restaurantId);
 
@@ -215,10 +227,14 @@ export class ProductService {
     }
 
     // 4. get products by restaurant id
-    const products = await findProductsByRestaurant(restaurantId);
+    const products = await findProductsByRestaurant(
+      restaurantId,
+      filters,
+      pagination,
+    );
 
     // 5. return products
-    return products;
+    return buildPaginationResult(products, pagination.limit, pagination.sortBy);
   };
 
   findById = async (id: number): Promise<Product> => {

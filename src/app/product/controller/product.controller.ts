@@ -16,7 +16,11 @@ import {
   UpdateProductQueryDTO,
 } from "../dto/product.dto";
 import { TOKENS } from "../../../lib/di/tokens";
-import { sendSuccess } from "../../../lib/http/response";
+import { sendPaginated, sendSuccess } from "../../../lib/http/response";
+import {
+  parseFilters,
+  parsePaginationQuery,
+} from "../../../lib/http/pagination/parse-pagination";
 
 @injectable()
 export class ProductController {
@@ -51,10 +55,14 @@ export class ProductController {
       );
 
       // 4. respond
-      sendSuccess(res, {
-        message: "Product category created successfully",
-        data: productCategory,
-      }, 201);
+      sendSuccess(
+        res,
+        {
+          message: "Product category created successfully",
+          data: productCategory,
+        },
+        201,
+      );
     } catch (error) {
       next(error);
     }
@@ -82,10 +90,14 @@ export class ProductController {
       );
 
       // 4. respond
-      sendSuccess(res, {
-        message: "Product created successfully",
-        data: product,
-      }, 201);
+      sendSuccess(
+        res,
+        {
+          message: "Product created successfully",
+          data: product,
+        },
+        201,
+      );
     } catch (error) {
       next(error);
     }
@@ -127,14 +139,31 @@ export class ProductController {
         req.params,
       );
 
-      // 2. call service
-      const products = await this.productService.findByBranch(Number(branchId));
+      // 2. parse pagination and filters query
+      const pagination = parsePaginationQuery(req.query, ["created_at", "id"]);
+      const filters = parseFilters(req.query, [
+        "id",
+        "name",
+        "description",
+        "category_name",
+      ]);
 
-      // 3. respond
-      sendSuccess(res, {
-        message: "Products found successfully",
-        data: products,
-      });
+      // 3. call service
+      const products = await this.productService.findByBranch(
+        Number(branchId),
+        filters,
+        pagination,
+      );
+
+      // 4. respond
+      sendPaginated(
+        res,
+        {
+          message: "Products found successfully",
+          data: products.data,
+        },
+        products.meta,
+      );
     } catch (error) {
       next(error);
     }
@@ -152,20 +181,30 @@ export class ProductController {
         req.params,
       );
 
-      // 2. call service
+      // 2. parse pagination and filters query
+      const pagination = parsePaginationQuery(req.query, ["created_at", "id"]);
+      const filters = parseFilters(req.query, ["id", "name", "description"]);
+
+      // 3. call service
       const products = await this.productService.findByRestaurant(
         {
           userId: req.user!.userId,
           role: req.user!.role,
         },
         Number(restaurantId),
+        filters,
+        pagination,
       );
 
-      // 3. respond
-      sendSuccess(res, {
-        message: "Products found successfully",
-        data: products,
-      });
+      // 4. respond
+      sendPaginated(
+        res,
+        {
+          message: "Products found successfully",
+          data: products.data,
+        },
+        products.meta,
+      );
     } catch (error) {
       next(error);
     }
