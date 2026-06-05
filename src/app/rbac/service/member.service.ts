@@ -50,12 +50,16 @@ import {
   PaginationMeta,
   PaginationParams,
 } from "../../../lib/http/pagination/cursor-pagination";
+import { IEmailProvider } from "../../../pkg/email/email.interface";
+import { memberInvitationEmailTemplate } from "../template/member-invitation.template";
 
 @injectable()
 export class MemberService {
   constructor(
     @inject(TOKENS.UserService)
     private readonly userService: UserService,
+    @inject(TOKENS.EmailProvider)
+    private readonly emailProvider: IEmailProvider,
   ) {}
 
   createMemberOwner = async (
@@ -191,8 +195,13 @@ export class MemberService {
         trx,
       );
 
-      // 5.4. TODO: send email to member
-      console.log(`mocked email sent: ${otp}`);
+      // 5.4. send email to member
+      const emailTemplate = memberInvitationEmailTemplate(otp, data.role);
+      await this.emailProvider.send(
+        user.email!,
+        emailTemplate.subject,
+        emailTemplate.html,
+      );
 
       // 5.5. commit transaction
       await trx.commit();

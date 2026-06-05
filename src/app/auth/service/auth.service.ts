@@ -42,6 +42,8 @@ import { UserService } from "../../user/service/user.service";
 import { MemberService } from "../../rbac/service/member.service";
 import { inject, injectable } from "tsyringe";
 import { TOKENS } from "../../../lib/di/tokens";
+import { IEmailProvider } from "../../../pkg/email/email.interface";
+import { passwordResetEmailTemplate } from "../template/password-reset.template";
 
 @injectable()
 export class AuthService {
@@ -52,6 +54,8 @@ export class AuthService {
     private readonly userService: UserService,
     @inject(TOKENS.MemberService)
     private readonly memberService: MemberService,
+    @inject(TOKENS.EmailProvider)
+    private readonly emailProvider: IEmailProvider,
   ) {}
 
   register = async (data: RegisterDTO) => {
@@ -218,8 +222,13 @@ export class AuthService {
       createdAt: new Date(),
     });
 
-    // 6.  TODO:send otp to user email
-    console.log(`mocked email sent: ${otp}`);
+    // 6. send otp to user email
+    const emailTemplate = passwordResetEmailTemplate(otp);
+    await this.emailProvider.send(
+      user.email,
+      emailTemplate.subject,
+      emailTemplate.html,
+    );
   };
 
   resetPassword = async (data: ResetPasswordDTO) => {
