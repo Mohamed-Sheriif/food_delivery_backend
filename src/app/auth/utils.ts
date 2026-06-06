@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import jwt, { SignOptions } from "jsonwebtoken";
-import { env } from "../../common/config/env";
+import { env } from "../../lib/config/env";
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
@@ -18,6 +18,9 @@ export interface JwtPayload {
   userId: number;
   email: string;
   role: string;
+  restaurantId?: number;
+  restaurantRole?: string;
+  branchIds?: number[];
 }
 
 export function createAccessToken(payload: JwtPayload): string {

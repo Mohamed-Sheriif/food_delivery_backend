@@ -1,4 +1,5 @@
-import { db } from "../../../common/knex/knex";
+import { Knex } from "knex";
+import { db } from "../../../lib/knex/knex";
 import { User } from "../entity/user.entity";
 
 const USER_COLUMNS = [
@@ -27,8 +28,11 @@ function toEntity(row: any) {
   });
 }
 
-export async function createUser(user: Partial<User>): Promise<User> {
-  const [row] = await db("users")
+export async function createUser(
+  user: Partial<User>,
+  conn: Knex = db,
+): Promise<User> {
+  const [row] = await conn("users")
     .insert({
       email: user.email,
       phone: user.phone,
@@ -97,4 +101,33 @@ export async function updateUserPassword(
   await db("users")
     .where({ id: userId })
     .update({ password_hash: newPassword });
+}
+
+export async function updateUser(
+  userId: number,
+  user: {
+    phone?: string;
+    name?: string;
+  },
+): Promise<User | undefined> {
+  const payload: Record<string, unknown> = {};
+
+  if (user.phone !== undefined) payload.phone = user.phone;
+  if (user.name !== undefined) payload.name = user.name;
+  if (Object.keys(payload).length === 0) {
+    return findUserById(userId);
+  }
+
+  payload.updated_at = new Date();
+
+  const [row] = await db("users")
+    .where({ id: userId })
+    .update(payload)
+    .returning(USER_COLUMNS);
+
+  return row ? toEntity(row) : undefined;
+}
+
+export async function deleteUser(userId: number): Promise<void> {
+  await db("users").where({ id: userId }).update({ deleted_at: new Date() });
 }

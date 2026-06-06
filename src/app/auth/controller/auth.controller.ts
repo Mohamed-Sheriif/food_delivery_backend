@@ -1,16 +1,27 @@
 import { NextFunction, Request, Response } from "express";
 
-import { validateBody } from "../../../common/validation/validate";
+import {
+  daysToMilliseconds,
+  hoursToMilliseconds,
+} from "../../../pkg/utils/time";
+import { validateBody } from "../../../lib/validation/validate";
 import {
   ForgetPasswordDTO,
   LoginDTO,
   RegisterDTO,
   ResetPasswordDTO,
 } from "../dto/auth.dto";
-import { AuthService, authService } from "../service/auth.service";
+import { AuthService } from "../service/auth.service";
+import { inject, injectable } from "tsyringe";
+import { TOKENS } from "../../../lib/di/tokens";
+import { sendSuccess } from "../../../lib/http/response";
 
+@injectable()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    @inject(TOKENS.AuthService)
+    private readonly authService: AuthService,
+  ) {}
 
   private setAuthCookies(
     res: Response,
@@ -19,12 +30,12 @@ export class AuthController {
     res.cookie("access_token", tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 1000, // 1 hour
+      maxAge: hoursToMilliseconds(1),
     });
     res.cookie("refresh_token", tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days,
+      maxAge: daysToMilliseconds(7),
       path: "/api/auth/refresh-token", // restrict refresh token to this path
     });
   }
@@ -41,7 +52,7 @@ export class AuthController {
       this.setAuthCookies(res, result);
 
       // 4. respond
-      res.status(201).json(result);
+      sendSuccess(res, result, 201);
     } catch (err) {
       next(err);
     }
@@ -59,7 +70,7 @@ export class AuthController {
       this.setAuthCookies(res, result);
 
       // 4. respond
-      res.status(200).json(result);
+      sendSuccess(res, result);
     } catch (err) {
       next(err);
     }
@@ -74,7 +85,7 @@ export class AuthController {
       await this.authService.forgetPassword(data.email);
 
       // 3. respond
-      res.status(200).json({ message: "Email sent." });
+      sendSuccess(res, { message: "Email sent." });
     } catch (error) {
       next(error);
     }
@@ -89,9 +100,9 @@ export class AuthController {
       await this.authService.resetPassword(data);
 
       // 3. respond
-      res
-        .status(200)
-        .json({ message: "Password reset successful, Please login agin." });
+      sendSuccess(res, {
+        message: "Password reset successful, Please login agin.",
+      });
     } catch (error) {
       next(error);
     }
@@ -109,11 +120,26 @@ export class AuthController {
       this.setAuthCookies(res, result);
 
       // 4. respond
-      res.status(200).json(result);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  acceptInvite = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. validate req.body
+      const data = await validateBody(ResetPasswordDTO, req.body);
+
+      // 2. call service
+      await this.authService.acceptInvite(data);
+
+      // 3. respond
+      sendSuccess(res, {
+        message: "Invitation accepted successfully, Please login agin.",
+      });
     } catch (error) {
       next(error);
     }
   };
 }
-
-export const authController = new AuthController(authService);

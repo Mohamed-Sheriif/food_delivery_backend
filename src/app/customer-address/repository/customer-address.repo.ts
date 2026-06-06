@@ -1,4 +1,4 @@
-import { db } from "../../../common/knex/knex";
+import { db } from "../../../lib/knex/knex";
 import { CustomerAddress } from "../entity/customer-address.entity";
 
 const CUSTOMER_ADDRESS_COLUMNS = [
@@ -120,8 +120,12 @@ export async function updateCustomerAddress(
   if (customerAddress.lng !== undefined) payload.lng = customerAddress.lng;
   if (customerAddress.isDefault !== undefined)
     payload.is_default = customerAddress.isDefault;
-  if (customerAddress.updatedAt !== undefined)
-    payload.updated_at = customerAddress.updatedAt;
+
+  if (Object.keys(payload).length === 0) {
+    return findCustomerAddressById(id);
+  }
+
+  payload.updated_at = new Date();
 
   const [row] = await db("customer_addresses")
     .update(payload)
