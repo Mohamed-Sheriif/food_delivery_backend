@@ -1,6 +1,8 @@
 import { db } from "../../../lib/knex/knex";
 import { UpdateBranchStatusDTO } from "../dto/branch.dto";
 import { Branch } from "../entity/branch.entity";
+import { NearbyBranch } from "../entity/nearby-branch.entity";
+import { Currency } from "../enums";
 
 const BRANCH_COLUMNS = [
   "id",
@@ -68,10 +70,38 @@ export async function createBranch(branch: Partial<Branch>): Promise<Branch> {
   return toEntity(row);
 }
 
+function toNearbyBranchEntity(row: {
+  id: number;
+  restaurant_id: number;
+  address_text: string;
+  label: string;
+  lat: number;
+  lng: number;
+  is_active: boolean;
+  accept_orders: boolean;
+  currency: string;
+  name: string;
+  logo_url: string;
+}): NearbyBranch {
+  return new NearbyBranch({
+    id: row.id,
+    restaurantId: row.restaurant_id,
+    addressText: row.address_text,
+    label: row.label,
+    lat: row.lat,
+    lng: row.lng,
+    isActive: row.is_active,
+    acceptOrders: row.accept_orders,
+    currency: row.currency as Currency,
+    restaurantName: row.name,
+    logoUrl: row.logo_url,
+  });
+}
+
 export async function findNearbyBranches(
   lat: number,
   lng: number,
-): Promise<Branch[]> {
+): Promise<NearbyBranch[]> {
   const result = await db.raw(
     `
       SELECT
@@ -93,7 +123,7 @@ export async function findNearbyBranches(
     [lng, lat],
   );
 
-  return result.rows;
+  return result.rows.map(toNearbyBranchEntity);
 }
 
 export async function findBranchById(id: number): Promise<Branch | undefined> {

@@ -9,6 +9,11 @@ import {
   PaginationParams,
 } from "../../../lib/http/pagination/cursor-pagination";
 
+const BRANCH_PRODUCT_SORT_COLUMNS: Record<string, string> = {
+  createdAt: "p.created_at",
+  id: "p.id",
+};
+
 const PRODUCT_COLUMNS = [
   "id",
   "name",
@@ -54,6 +59,7 @@ function toBranchProductEntity(row: {
   price: string | number;
   stock: number;
   is_available: boolean;
+  created_at: Date;
 }): BranchProduct {
   return new BranchProduct({
     id: row.id,
@@ -66,6 +72,7 @@ function toBranchProductEntity(row: {
     price: Number(row.price),
     stock: row.stock,
     isAvailable: row.is_available,
+    createdAt: row.created_at,
   });
 }
 
@@ -106,6 +113,7 @@ export async function findProductsByBranch(
       "pbd.price",
       "pbd.stock",
       "pbd.is_available",
+      "p.created_at",
     )
     .innerJoin("product_branch_details as pbd", "pbd.product_id", "p.id")
     .innerJoin("product_categories as pc", "pc.id", "p.category_id")
@@ -121,7 +129,9 @@ export async function findProductsByBranch(
 
   // apply pagination if any
   if (pagination !== undefined) {
-    query = applyCursorPagination(query, pagination);
+    query = applyCursorPagination(query, pagination, {
+      sortColumn: BRANCH_PRODUCT_SORT_COLUMNS[pagination.sortBy],
+    });
   }
 
   // execute query and return the result

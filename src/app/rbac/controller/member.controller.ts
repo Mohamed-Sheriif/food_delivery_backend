@@ -61,7 +61,7 @@ export class MemberController {
       );
 
       // 2. parse pagination and filters query
-      const pagination = parsePaginationQuery(req.query, ["created_at", "id"]);
+      const pagination = parsePaginationQuery(req.query, ["createdAt", "id"]);
       const filters = parseFilters(req.query, [
         "id",
         "status",

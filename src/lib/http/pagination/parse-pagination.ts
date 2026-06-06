@@ -6,7 +6,7 @@ export function parsePaginationQuery(
 ): PaginationParams {
   const sortBy = allowedSortByFields.includes(query.sortBy as string)
     ? (query.sortBy as string)
-    : allowedSortByFields[0];
+    : "createdAt";
 
   return {
     cursor: query.cursor as string,

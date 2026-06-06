@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import { snakeToCamel } from "../../../pkg/utils/string";
+import { camelToSnake, snakeToCamel } from "../../../pkg/utils/string";
 
 export interface PaginationParams {
   cursor?: string;
@@ -31,34 +31,42 @@ export interface PaginationMeta {
   count: number;
 }
 
-export function applyCursorPagination<T>(
+export interface CursorPaginationOptions {
+  /** Qualified SQL column, e.g. "p.created_at" — required for joined queries */
+  sortColumn?: string;
+}
+
+export function applyCursorPagination(
   query: Knex.QueryBuilder,
   params: PaginationParams,
+  options?: CursorPaginationOptions,
 ): Knex.QueryBuilder {
   if (!params.sortBy) return query;
 
+  const sortColumn = options?.sortColumn ?? camelToSnake(params.sortBy);
+
   if (params.cursor) {
     const op = params.sortOrder === "desc" ? "<" : ">";
-    query.where(params.sortBy, op, params.cursor);
+    query.where(sortColumn, op, params.cursor);
   }
 
-  return query.orderBy(params.sortBy, params.sortOrder).limit(params.limit + 1);
-}
-
-function getCursorValue(
-  item: Record<string, unknown>,
-  sortBy: string,
-): string | null {
-  const value = item[sortBy] ?? item[snakeToCamel(sortBy)];
-  if (value == null) return null;
-  if (value instanceof Date) return value.toISOString();
-  return String(value);
+  return query
+    .orderBy(sortColumn, params.sortOrder)
+    .limit(params.limit + 1);
 }
 
 export function applyFilters(
   query: Knex.QueryBuilder,
   filters: FilterParams[],
 ): Knex.QueryBuilder {
+  // convert camelCase fields to snake_case
+  filters = filters.map((filter) => ({
+    field: camelToSnake(filter.field),
+    operator: filter.operator,
+    value: filter.value,
+  }));
+
+  // apply filters
   for (const filter of filters) {
     switch (filter.operator) {
       case "eq":
@@ -117,7 +125,11 @@ export function buildPaginationResult<T>(
 
   if (hasMore && data.length > 0) {
     const lastItem = data[data.length - 1] as Record<string, unknown>;
-    nextCursor = getCursorValue(lastItem, sortBy);
+    nextCursor = String(
+      lastItem[sortBy] instanceof Date
+        ? lastItem[sortBy].toISOString()
+        : lastItem[sortBy],
+    );
   }
 
   return {

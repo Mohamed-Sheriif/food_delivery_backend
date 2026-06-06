@@ -9,6 +9,7 @@ export class BranchProduct {
   price: number;
   stock: number;
   isAvailable: boolean;
+  createdAt: Date;
 
   constructor(data: Partial<BranchProduct>) {
     this.id = data.id!;
@@ -21,5 +22,6 @@ export class BranchProduct {
     this.price = data.price!;
     this.stock = data.stock!;
     this.isAvailable = data.isAvailable!;
+    this.createdAt = data.createdAt!;
   }
 }

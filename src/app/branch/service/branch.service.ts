@@ -73,10 +73,8 @@ export class BranchService {
     return newBranch;
   };
 
-  findNearbyBranches = async (lat: number, lng: number): Promise<Branch[]> => {
-    const branches = await findNearbyBranches(lat, lng);
-
-    return branches;
+  findNearbyBranches = async (lat: number, lng: number) => {
+    return findNearbyBranches(lat, lng);
   };
 
   updateBranch = async (

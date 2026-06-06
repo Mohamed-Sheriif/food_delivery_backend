@@ -44,12 +44,12 @@ export class RestaurantController {
   findAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
       // 1. parse pagination and filters query
-      const pagination = parsePaginationQuery(req.query, ["created_at", "id"]);
+      const pagination = parsePaginationQuery(req.query, ["createdAt", "id"]);
       const filters = parseFilters(req.query, [
         "id",
         "name",
         "status",
-        "primary_country",
+        "primaryCountry",
       ]);
 
       // 2. call service
