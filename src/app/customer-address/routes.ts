@@ -10,23 +10,34 @@ const customerAddressController = container.resolve<CustomerAddressController>(
   TOKENS.CustomerAddressController,
 );
 
+// create customer address
+customerAddressRouter.post("/", authenticate, customerAddressController.create);
+
+// list customer addresses
 customerAddressRouter.get("/", authenticate, customerAddressController.list);
+
+// get customer address by id
 customerAddressRouter.get(
   "/:id",
   authenticate,
   customerAddressController.getById,
 );
-customerAddressRouter.post("/", authenticate, customerAddressController.create);
+
+// update customer address
 customerAddressRouter.patch(
   "/:id",
   authenticate,
   customerAddressController.update,
 );
+
+// make customer address default
 customerAddressRouter.patch(
   "/:id/make-default",
   authenticate,
   customerAddressController.makeDefault,
 );
+
+// delete customer address
 customerAddressRouter.delete(
   "/:id",
   authenticate,

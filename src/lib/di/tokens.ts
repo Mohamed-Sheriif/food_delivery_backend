@@ -20,4 +20,6 @@ export const TOKENS = {
 
   // Lib/infra
   Logger: Symbol.for("Logger"),
+  CacheProvider: Symbol.for("CacheProvider"),
+  EmailProvider: Symbol.for("EmailProvider"),
 };

@@ -10,7 +10,11 @@ import {
   UpdateRestaurantStatusDTO,
 } from "../dto/restaurant.dto";
 import { TOKENS } from "../../../lib/di/tokens";
-import { sendSuccess } from "../../../lib/http/response";
+import { sendPaginated, sendSuccess } from "../../../lib/http/response";
+import {
+  parseFilters,
+  parsePaginationQuery,
+} from "../../../lib/http/pagination/parse-pagination";
 
 @injectable()
 export class RestaurantController {
@@ -39,14 +43,27 @@ export class RestaurantController {
 
   findAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // 1. call service
-      const restaurants = await this.restaurantService.findAll();
+      // 1. parse pagination and filters query
+      const pagination = parsePaginationQuery(req.query, ["createdAt", "id"]);
+      const filters = parseFilters(req.query, [
+        "id",
+        "name",
+        "status",
+        "primaryCountry",
+      ]);
 
-      // 2. respond with the restaurants data
-      sendSuccess(res, {
-        message: "Restaurants retrieved successfully",
-        data: restaurants,
-      });
+      // 2. call service
+      const result = await this.restaurantService.findAll(filters, pagination);
+
+      // 3. respond with the restaurants data
+      sendPaginated(
+        res,
+        {
+          message: "Restaurants retrieved successfully",
+          data: result.data,
+        },
+        result.meta,
+      );
     } catch (error) {
       next(error);
     }

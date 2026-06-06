@@ -11,6 +11,7 @@ const memberController = container.resolve<MemberController>(
   TOKENS.MemberController,
 );
 
+// create restaurant member
 rbacRouter.post(
   "/restaurants/:restaurantId/members",
   authenticate,
@@ -19,6 +20,7 @@ rbacRouter.post(
   memberController.createMember,
 );
 
+// list restaurant members
 rbacRouter.get(
   "/restaurants/:restaurantId/members",
   authenticate,
@@ -27,6 +29,7 @@ rbacRouter.get(
   memberController.listMembers,
 );
 
+// update restaurant member
 rbacRouter.patch(
   "/restaurants/:restaurantId/members/:memberId",
   authenticate,
@@ -35,6 +38,7 @@ rbacRouter.patch(
   memberController.updateMember,
 );
 
+// delete restaurant member
 rbacRouter.delete(
   "/restaurants/:restaurantId/members/:memberId",
   authenticate,
@@ -43,6 +47,7 @@ rbacRouter.delete(
   memberController.deleteMember,
 );
 
+// update restaurant member branches
 rbacRouter.patch(
   "/restaurants/:restaurantId/members/:memberId/branches",
   authenticate,
@@ -51,6 +56,7 @@ rbacRouter.patch(
   memberController.updateMemberBranches,
 );
 
+// get role permissions
 rbacRouter.get(
   "/roles/:roleName/permissions",
   memberController.getRolePermissions,

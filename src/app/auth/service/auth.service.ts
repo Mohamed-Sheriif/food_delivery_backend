@@ -42,6 +42,8 @@ import { UserService } from "../../user/service/user.service";
 import { MemberService } from "../../rbac/service/member.service";
 import { inject, injectable } from "tsyringe";
 import { TOKENS } from "../../../lib/di/tokens";
+import { IEmailProvider } from "../../../pkg/email/email.interface";
+import { passwordResetEmailTemplate } from "../template/password-reset.template";
 
 @injectable()
 export class AuthService {
@@ -52,6 +54,8 @@ export class AuthService {
     private readonly userService: UserService,
     @inject(TOKENS.MemberService)
     private readonly memberService: MemberService,
+    @inject(TOKENS.EmailProvider)
+    private readonly emailProvider: IEmailProvider,
   ) {}
 
   register = async (data: RegisterDTO) => {
@@ -218,8 +222,13 @@ export class AuthService {
       createdAt: new Date(),
     });
 
-    // 6.  TODO:send otp to user email
-    console.log(`mocked email sent: ${otp}`);
+    // 6. send otp to user email
+    const emailTemplate = passwordResetEmailTemplate(otp);
+    await this.emailProvider.send(
+      user.email,
+      emailTemplate.subject,
+      emailTemplate.html,
+    );
   };
 
   resetPassword = async (data: ResetPasswordDTO) => {
@@ -241,31 +250,6 @@ export class AuthService {
 
     // 5. verify otp
     const otpHash = hashOTP(data.otp);
-    // #region agent log
-    fetch("http://127.0.0.1:7398/ingest/2588f2b4-32d2-458c-a417-7de7fbca8337", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "be9467",
-      },
-      body: JSON.stringify({
-        sessionId: "be9467",
-        runId: "accept-invite",
-        hypothesisId: "H4",
-        location: "src/app/auth/service/auth.service.ts:287",
-        message: "OTP comparison computed",
-        data: {
-          userId: user.id,
-          passwordResetId: passwordReset.id,
-          requestOtpHashPrefix: otpHash.slice(0, 12),
-          storedOtpHashPrefix: passwordReset.otpHash.slice(0, 12),
-          hashesMatch: otpHash === passwordReset.otpHash,
-          isExpired: passwordReset.isExpired(),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     if (otpHash !== passwordReset.otpHash || passwordReset.isExpired()) {
       throw new InvalidOTPError();
     }

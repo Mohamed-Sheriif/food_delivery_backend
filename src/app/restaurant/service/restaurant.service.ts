@@ -25,6 +25,12 @@ import {
 } from "../../../lib/auth/errors";
 import { UserService } from "../../user/service/user.service";
 import { TOKENS } from "../../../lib/di/tokens";
+import {
+  buildPaginationResult,
+  FilterParams,
+  PaginationMeta,
+  PaginationParams,
+} from "../../../lib/http/pagination/cursor-pagination";
 
 @injectable()
 export class RestaurantService {
@@ -107,10 +113,17 @@ export class RestaurantService {
     };
   };
 
-  findAll = async (): Promise<Restaurant[]> => {
-    const restaurants = await findAllRestaurants();
+  findAll = async (
+    filters: FilterParams[],
+    pagination: PaginationParams,
+  ): Promise<{ data: Restaurant[]; meta: PaginationMeta }> => {
+    const restaurants = await findAllRestaurants(filters, pagination);
 
-    return restaurants;
+    return buildPaginationResult(
+      restaurants,
+      pagination.limit,
+      pagination.sortBy,
+    );
   };
 
   findById = async (id: number): Promise<Restaurant> => {

@@ -23,6 +23,7 @@ export function createApp() {
     }),
   );
   app.use(helmet());
+  app.set("query parser", "extended");
   app.use(express.json());
   app.use(cookieParser());
   app.use(correlationId);

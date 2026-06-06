@@ -44,12 +44,22 @@ import { findRoleByName } from "../repository/role.repo";
 import { UserService } from "../../user/service/user.service";
 import { inject, injectable } from "tsyringe";
 import { TOKENS } from "../../../lib/di/tokens";
+import {
+  buildPaginationResult,
+  FilterParams,
+  PaginationMeta,
+  PaginationParams,
+} from "../../../lib/http/pagination/cursor-pagination";
+import { IEmailProvider } from "../../../pkg/email/email.interface";
+import { memberInvitationEmailTemplate } from "../template/member-invitation.template";
 
 @injectable()
 export class MemberService {
   constructor(
     @inject(TOKENS.UserService)
     private readonly userService: UserService,
+    @inject(TOKENS.EmailProvider)
+    private readonly emailProvider: IEmailProvider,
   ) {}
 
   createMemberOwner = async (
@@ -185,8 +195,13 @@ export class MemberService {
         trx,
       );
 
-      // 5.4. TODO: send email to member
-      console.log(`mocked email sent: ${otp}`);
+      // 5.4. send email to member
+      const emailTemplate = memberInvitationEmailTemplate(otp, data.role);
+      await this.emailProvider.send(
+        user.email!,
+        emailTemplate.subject,
+        emailTemplate.html,
+      );
 
       // 5.5. commit transaction
       await trx.commit();
@@ -199,7 +214,11 @@ export class MemberService {
     return;
   };
 
-  listMembers = async (restaurantId: number) => {
+  listMembers = async (
+    restaurantId: number,
+    filters: FilterParams[],
+    pagination: PaginationParams,
+  ): Promise<{ data: RestaurantMember[]; meta: PaginationMeta }> => {
     // 1. find restaurant by id
     const restaurant = await findRestaurantById(restaurantId);
     if (!restaurant) {
@@ -207,10 +226,14 @@ export class MemberService {
     }
 
     // 2. find members by restaurant id
-    const members = await findMembersByRestaurantId(restaurantId);
+    const members = await findMembersByRestaurantId(
+      restaurantId,
+      filters,
+      pagination,
+    );
 
     // 3. return members
-    return members;
+    return buildPaginationResult(members, pagination.limit, pagination.sortBy);
   };
 
   updateMember = async (

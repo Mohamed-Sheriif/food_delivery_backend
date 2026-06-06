@@ -2,6 +2,12 @@ import { Knex } from "knex";
 import { RestaurantMember } from "../entity/restaurant-member.entity";
 import { db } from "../../../lib/knex/knex";
 import { RestaurantMemberStatus } from "../enums";
+import {
+  applyCursorPagination,
+  applyFilters,
+  FilterParams,
+  PaginationParams,
+} from "../../../lib/http/pagination/cursor-pagination";
 
 const MEMBER_COLUMNS = [
   "id",
@@ -91,13 +97,17 @@ export async function findRestaurantMemberWithRole(
 
 export async function findMembersByRestaurantId(
   restaurantId: number,
+  filters: FilterParams[],
+  pagination: PaginationParams,
   conn: Knex = db,
 ): Promise<RestaurantMember[]> {
-  const rows = await conn("restaurant_members as rm")
+  // start with the base query
+  let query = conn("restaurant_members as rm")
     .select(
       "rm.id",
       "rm.user_id as userId",
       "rm.status",
+      "rm.created_at",
       "u.email",
       "u.name",
       "u.phone",
@@ -107,6 +117,19 @@ export async function findMembersByRestaurantId(
     .leftJoin("users as u", "rm.user_id", "u.id")
     .leftJoin("roles as r", "rm.role_id", "r.id")
     .where("rm.restaurant_id", restaurantId);
+
+  // apply filters if any
+  if (filters.length > 0) {
+    query = applyFilters(query, filters);
+  }
+
+  // apply pagination if any
+  if (pagination !== undefined) {
+    query = applyCursorPagination(query, pagination);
+  }
+
+  // execute query and return the result
+  const rows = await query;
 
   return rows.map((row) => toEntity(row));
 }
