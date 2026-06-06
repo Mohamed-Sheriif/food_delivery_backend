@@ -11,9 +11,16 @@ const restaurantController = container.resolve<RestaurantController>(
   TOKENS.RestaurantController,
 );
 
+// create restaurant with owner
 restaurantRouter.post("/", authenticate, restaurantController.createWithOwner);
+
+// list restaurants
 restaurantRouter.get("/", restaurantController.findAll);
+
+// get restaurant by id
 restaurantRouter.get("/:id", restaurantController.findById);
+
+// update restaurant
 restaurantRouter.put(
   "/:id",
   authenticate,
@@ -21,6 +28,8 @@ restaurantRouter.put(
   rbac({ resource: "core:restaurant", action: "update" }),
   restaurantController.update,
 );
+
+// update restaurant status
 restaurantRouter.put(
   "/:id/status",
   authenticate,
